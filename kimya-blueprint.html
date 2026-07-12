@@ -1,0 +1,477 @@
+<title>مخطّط الوكيل الكيميائي — كيميا</title>
+<style>
+  :root {
+    --ink:        #0b1417;
+    --panel:      #0f1c20;
+    --panel-2:    #13252a;
+    --line:       #21383e;
+    --text:       #e8f1f0;
+    --text-dim:   #9fb6b6;
+    --text-faint: #6d8888;
+    --teal:       #2fd6c4;
+    --teal-deep:  #12a596;
+    --amber:      #f4a63a;
+    --violet:     #b48cff;
+    --green:      #6fd08a;
+    --rose:       #ff7b93;
+    --core:       var(--teal);
+    --research:   var(--amber);
+    --assets:     var(--violet);
+    --publish:    var(--green);
+    --shadow:     0 1px 0 rgba(255,255,255,.03), 0 18px 40px -24px rgba(0,0,0,.7);
+    --radius:     14px;
+    --maxw:       1080px;
+    --font-body:  "Segoe UI", "Noto Naskh Arabic", "Geeza Pro", system-ui, sans-serif;
+    --font-disp:  "Noto Kufi Arabic", "Tajawal", "Segoe UI", system-ui, sans-serif;
+    --font-mono:  "SF Mono", "Cascadia Code", ui-monospace, "Menlo", monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --ink:        #f3f7f5;
+      --panel:      #ffffff;
+      --panel-2:    #eef4f2;
+      --line:       #d6e2df;
+      --text:       #10201f;
+      --text-dim:   #47605d;
+      --text-faint: #7a938f;
+      --teal:       #0f9c8d;
+      --teal-deep:  #0b7a6e;
+      --amber:      #c9781a;
+      --violet:     #7a52d6;
+      --green:      #2f9e57;
+      --shadow:     0 1px 0 rgba(255,255,255,.6), 0 18px 40px -28px rgba(20,60,55,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#0b1417; --panel:#0f1c20; --panel-2:#13252a; --line:#21383e;
+    --text:#e8f1f0; --text-dim:#9fb6b6; --text-faint:#6d8888;
+    --teal:#2fd6c4; --teal-deep:#12a596; --amber:#f4a63a; --violet:#b48cff; --green:#6fd08a; --rose:#ff7b93;
+    --shadow:0 1px 0 rgba(255,255,255,.03),0 18px 40px -24px rgba(0,0,0,.7);
+  }
+  :root[data-theme="light"] {
+    --ink:#f3f7f5; --panel:#ffffff; --panel-2:#eef4f2; --line:#d6e2df;
+    --text:#10201f; --text-dim:#47605d; --text-faint:#7a938f;
+    --teal:#0f9c8d; --teal-deep:#0b7a6e; --amber:#c9781a; --violet:#7a52d6; --green:#2f9e57; --rose:#d64a63;
+    --shadow:0 1px 0 rgba(255,255,255,.6),0 18px 40px -28px rgba(20,60,55,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--ink); color: var(--text);
+    font-family: var(--font-body); line-height: 1.7;
+    direction: rtl; text-align: right;
+    font-size: clamp(15px, 1.05vw, 17px);
+    overflow-x: hidden;
+  }
+  .wrap { max-width: var(--maxw); margin-inline: auto; padding-inline: clamp(18px, 5vw, 40px); }
+  section { padding-block: clamp(48px, 7vw, 84px); }
+  h1,h2,h3 { font-family: var(--font-disp); font-weight: 800; text-wrap: balance; margin: 0; line-height: 1.2; }
+  p { margin: 0; }
+  .stack > * + * { margin-top: 1em; }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--teal); font-weight: 600;
+    display: inline-flex; align-items: center; gap: .6em;
+  }
+  .eyebrow::before { content:""; width: 26px; height:1px; background: var(--teal); opacity:.7; }
+
+  /* ---------- HERO ---------- */
+  .hero { position: relative; }
+  #mol { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: .55; }
+  .hero .wrap { position: relative; z-index: 1; padding-block: clamp(72px, 12vw, 128px); }
+  .hero h1 {
+    font-size: clamp(2.6rem, 7vw, 4.7rem); letter-spacing: -.01em; margin-top: .35em;
+  }
+  .hero h1 .glow { color: var(--teal); }
+  .lede { color: var(--text-dim); font-size: clamp(1.05rem, 2vw, 1.3rem); max-width: 44ch; margin-top: 1.1em; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2em; }
+  .chip {
+    display: inline-flex; align-items: center; gap: .55em;
+    background: color-mix(in srgb, var(--panel) 80%, transparent);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: .5em 1em; font-size: .85rem; color: var(--text-dim);
+    backdrop-filter: blur(6px);
+  }
+  .chip b { color: var(--text); font-weight: 700; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 12px var(--teal); }
+
+  /* ---------- SECTION HEADS ---------- */
+  .head { max-width: 62ch; margin-bottom: clamp(28px, 4vw, 44px); }
+  .head h2 { font-size: clamp(1.7rem, 3.6vw, 2.5rem); margin-top: .5em; }
+  .head p { color: var(--text-dim); margin-top: .8em; }
+
+  .divider { height: 1px; background: linear-gradient(to left, transparent, var(--line), transparent); }
+
+  /* ---------- PHILOSOPHY ---------- */
+  .bond {
+    display: grid; grid-template-columns: 1fr; gap: 18px;
+    background: linear-gradient(160deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: clamp(24px, 4vw, 40px); box-shadow: var(--shadow);
+  }
+  .bond-formula {
+    font-family: var(--font-mono); font-size: clamp(1rem,2.2vw,1.4rem);
+    color: var(--text); letter-spacing: .04em; direction: ltr; text-align: center;
+    padding: 14px; border: 1px dashed var(--line); border-radius: 10px;
+    background: color-mix(in srgb, var(--teal) 6%, transparent);
+  }
+  .bond-formula .op { color: var(--teal); }
+  .bond-formula .yield { color: var(--amber); }
+
+  /* ---------- PERIODIC STACK ---------- */
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+  .legend span { display: inline-flex; align-items: center; gap: .5em; font-size: .82rem; color: var(--text-dim); }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; }
+  .layer { margin-top: 34px; }
+  .layer-title { display: flex; align-items: baseline; gap: .7em; margin-bottom: 16px; flex-wrap: wrap; }
+  .layer-title h3 { font-size: 1.15rem; }
+  .layer-title .n { font-family: var(--font-mono); font-size: .78rem; color: var(--text-faint); letter-spacing: .1em; }
+  .layer-title .tag { font-size: .78rem; color: var(--text-dim); }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .tile {
+    position: relative; border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 14px 16px; background: var(--panel);
+    box-shadow: var(--shadow); overflow: hidden; transition: transform .18s ease, border-color .18s ease;
+    border-top: 3px solid var(--cat, var(--line));
+  }
+  .tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--cat) 55%, var(--line)); }
+  .tile .num { position: absolute; top: 10px; left: 12px; font-family: var(--font-mono); font-size: .68rem; color: var(--text-faint); }
+  .tile .sym { font-family: var(--font-mono); font-weight: 700; font-size: 1.9rem; color: var(--cat); letter-spacing: .02em; line-height: 1; direction: ltr; }
+  .tile .name { font-weight: 700; margin-top: .5em; font-size: .98rem; }
+  .tile .desc { color: var(--text-dim); font-size: .8rem; margin-top: .3em; line-height: 1.5; }
+  .tile .state { position:absolute; top:10px; right:12px; font-size:.62rem; font-family:var(--font-mono); letter-spacing:.08em; padding:.15em .5em; border-radius:999px; border:1px solid var(--line); color:var(--text-faint); }
+  .tile .state.on { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
+
+  .cat-core    { --cat: var(--core); }
+  .cat-research{ --cat: var(--research); }
+  .cat-assets  { --cat: var(--assets); }
+  .cat-publish { --cat: var(--publish); }
+
+  /* ---------- ROADMAP ---------- */
+  .path { display: grid; gap: 14px; position: relative; }
+  .phase {
+    display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: start;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: clamp(20px, 3vw, 30px); box-shadow: var(--shadow); position: relative;
+  }
+  .phase .idx {
+    font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem;
+    width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px;
+    background: color-mix(in srgb, var(--teal) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--teal) 40%, var(--line)); color: var(--teal);
+  }
+  .phase.p2 .idx { background: color-mix(in srgb, var(--amber) 12%, transparent); border-color: color-mix(in srgb, var(--amber) 40%, var(--line)); color: var(--amber); }
+  .phase.p3 .idx { background: color-mix(in srgb, var(--violet) 12%, transparent); border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); color: var(--violet); }
+  .phase.p4 .idx { background: color-mix(in srgb, var(--green) 12%, transparent); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); color: var(--green); }
+  .phase h3 { font-size: 1.2rem; }
+  .phase .when { font-family: var(--font-mono); font-size: .72rem; color: var(--text-faint); letter-spacing: .08em; margin-top: .3em; }
+  .phase p { color: var(--text-dim); margin-top: .7em; }
+  .phase ul { margin: .8em 0 0; padding: 0; list-style: none; display: grid; gap: .45em; }
+  .phase li { position: relative; padding-inline-start: 1.3em; font-size: .9rem; color: var(--text); }
+  .phase li::before { content: "▸"; position: absolute; inset-inline-start: 0; color: var(--teal); }
+  .phase.p2 li::before { color: var(--amber); }
+  .phase.p3 li::before { color: var(--violet); }
+  .phase.p4 li::before { color: var(--green); }
+
+  /* ---------- CAPABILITIES ---------- */
+  .caps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .cap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+  .cap .ic { font-family: var(--font-mono); color: var(--teal); font-size: .9rem; letter-spacing: .1em; }
+  .cap h4 { margin: .6em 0 .4em; font-family: var(--font-disp); font-size: 1.05rem; font-weight: 800; }
+  .cap p { color: var(--text-dim); font-size: .88rem; }
+
+  /* ---------- GUARDRAIL ---------- */
+  .guard {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--amber) 12%, var(--panel)), var(--panel));
+    border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--line));
+    border-radius: var(--radius); padding: clamp(22px, 4vw, 34px); box-shadow: var(--shadow);
+  }
+  .guard .eyebrow { color: var(--amber); }
+  .guard .eyebrow::before { background: var(--amber); }
+  .guard h3 { margin-top: .6em; font-size: 1.35rem; }
+  .guard p { color: var(--text-dim); margin-top: .7em; max-width: 60ch; }
+
+  /* ---------- START CTA ---------- */
+  .start {
+    background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--teal) 18%, var(--panel)), var(--panel));
+    border: 1px solid color-mix(in srgb, var(--teal) 40%, var(--line));
+    border-radius: 18px; padding: clamp(26px, 4vw, 44px); box-shadow: var(--shadow);
+  }
+  .start h2 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); }
+  .start .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; margin-top: 24px; }
+  .step { border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: color-mix(in srgb, var(--panel) 70%, transparent); }
+  .step .k { font-family: var(--font-mono); color: var(--teal); font-size: .82rem; }
+  .step h4 { margin: .5em 0 .3em; font-size: 1rem; font-family: var(--font-disp); font-weight: 800; }
+  .step p { color: var(--text-dim); font-size: .85rem; }
+
+  footer { border-top: 1px solid var(--line); }
+  footer .wrap { padding-block: 32px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: var(--text-faint); font-size: .82rem; }
+  footer .brand { font-family: var(--font-disp); font-weight: 800; color: var(--text-dim); }
+
+  @media (max-width: 560px) {
+    .phase { grid-template-columns: 1fr; }
+    .phase .idx { width: 40px; height: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<header class="hero">
+  <canvas id="mol" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <span class="eyebrow">مخطّط معماري · الإصدار 1</span>
+    <h1>كيميا <span class="glow">—</span> مساعدك الشخصي الذكي</h1>
+    <p class="lede">صديقٌ باحث يتذكّرك، يدير أصولك الرقمية بمصداقية، ويحمل شغفك بالكيمياء إلى كل منصّاتك — يُبنى طبقةً فوق طبقة، لا دفعةً واحدة.</p>
+    <div class="meta-row">
+      <span class="chip"><span class="dot"></span> الحالة: <b>قيد التصميم</b></span>
+      <span class="chip">المقر المقترح: <b>تيليجرام</b></span>
+      <span class="chip">الروح الأولى: <b>الصديق الباحث</b></span>
+      <span class="chip">المبدأ: <b>الذاكرة قبل كل شيء</b></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">الفكرة المحورية</span>
+        <h2>الرابطة الأساسية: الذاكرة</h2>
+        <p>الفرق بين «أداة» و«صديق مواكب» عنصرٌ واحد — الذاكرة الدائمة. أي وكيل بلا ذاكرة يبدأ من الصفر كل محادثة، كمركّبٍ بلا رابطة يتفكّك فوراً. لذلك حجر الأساس ليس النشر ولا البحث، بل الطبقة التي تجعله <em>يعرفك</em>.</p>
+      </div>
+      <div class="bond stack">
+        <div class="bond-formula">
+          ذاكرتك <span class="op">+</span> بحثٌ موثّق <span class="op">+</span> أصولك الرقمية <span class="yield">→</span> صديقٌ يعرفك ويعمل معك
+        </div>
+        <p>كل طبقة تُقوّي التالية: وكيلٌ يتذكّرك ثم يبحث بمصداقية = باحثٌ حقيقي. أضِف إدارة الأصول = مساعد شخصي. أضِف النشر = مدير سوشيال ميديا. اعكس الترتيب، تحصل على بوت نشر أعمى بلا روح.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="divider"></div></div>
+
+  <section>
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">حزمة الأدوات · MCP</span>
+        <h2>عناصر بناء الوكيل</h2>
+        <p>كل أداة عنصرٌ في «جدول دوري» للقدرات، مصنّفة في أربع طبقات. الترتيب الملوّن هو ترتيب البناء الموصى به — من القلب إلى الأطراف.</p>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--core)"></i> القلب</span>
+        <span><i class="swatch" style="background:var(--research)"></i> البحث والمصداقية</span>
+        <span><i class="swatch" style="background:var(--assets)"></i> الأصول الرقمية</span>
+        <span><i class="swatch" style="background:var(--publish)"></i> النشر والأتمتة</span>
+        <span style="color:var(--green)"><i class="swatch" style="background:var(--green)"></i> «متصل» = مُفعّل في جلستك</span>
+      </div>
+
+      <div class="layer">
+        <div class="layer-title"><span class="n">01</span><h3>الطبقة الأولى — القلب</h3><span class="tag">إلزامية · ابدأ هنا</span></div>
+        <div class="tiles">
+          <div class="tile cat-core"><span class="num">01</span><div class="sym">Me</div><div class="name">Memory</div><div class="desc">رسم بياني لمعرفتك: من أنت، اهتماماتك، مشاريعك. جوهر «الصديق».</div></div>
+          <div class="tile cat-core"><span class="num">02</span><div class="sym">Fs</div><div class="name">Filesystem</div><div class="desc">وصول منظّم لملفاتك — أساس إدارة الأصول.</div></div>
+          <div class="tile cat-core"><span class="num">03</span><div class="sym">Sq</div><div class="name">Sequential Thinking</div><div class="desc">تفكير خطوة بخطوة في المهام المعقّدة بدل الاندفاع.</div></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-title"><span class="n">02</span><h3>الطبقة الثانية — البحث بمصداقية</h3><span class="tag">جوهر طلبك</span></div>
+        <div class="tiles">
+          <div class="tile cat-research"><span class="num">04</span><div class="sym">Tv</div><div class="name">Tavily / Exa</div><div class="desc">بحث ويب للـAI بمصادر موثّقة قابلة للاستشهاد.</div></div>
+          <div class="tile cat-research"><span class="num">05</span><div class="sym">Pc</div><div class="name">PubChem</div><div class="desc">💎 مركّبات وتفاعلات رسمية — يضمن صحة كيميائك 100%.</div></div>
+          <div class="tile cat-research"><span class="num">06</span><div class="sym">Ft</div><div class="name">Fetch</div><div class="desc">يقرأ الصفحات كاملة ويستخرج محتواها للتحليل العميق.</div></div>
+          <div class="tile cat-research"><span class="num">07</span><div class="sym">Ax</div><div class="name">arXiv / Wikipedia</div><div class="desc">أبحاث علمية ومرجعية موثّقة.</div></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-title"><span class="n">03</span><h3>الطبقة الثالثة — الأصول الرقمية</h3><span class="tag">أغلبها جاهز عندك</span></div>
+        <div class="tiles">
+          <div class="tile cat-assets"><span class="num">08</span><span class="state on">متصل</span><div class="sym">Dr</div><div class="name">Google Drive</div><div class="desc">تنظيم وأرشفة وبحث في ملفاتك السحابية.</div></div>
+          <div class="tile cat-assets"><span class="num">09</span><span class="state on">متصل</span><div class="sym">Cv</div><div class="name">Canva</div><div class="desc">تحويل المحتوى النصي إلى بطاقات بصرية بهوية ثابتة.</div></div>
+          <div class="tile cat-assets"><span class="num">10</span><span class="state on">متصل</span><div class="sym">Gm</div><div class="name">Gmail</div><div class="desc">فرز البريد، الصياغة، والمتابعة نيابةً عنك.</div></div>
+          <div class="tile cat-assets"><span class="num">11</span><span class="state on">متصل</span><div class="sym">Cl</div><div class="name">Calendar</div><div class="desc">جدولة المهام والتذكير — إيقاع يومك.</div></div>
+          <div class="tile cat-assets"><span class="num">12</span><div class="sym">No</div><div class="name">Notion</div><div class="desc">العقل الثاني المرئي — قاعدة معرفة تتصفّحها أنت والوكيل.</div></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-title"><span class="n">04</span><h3>الطبقة الرابعة — النشر والأتمتة</h3><span class="tag">الأخيرة</span></div>
+        <div class="tiles">
+          <div class="tile cat-publish"><span class="num">13</span><span class="state on">متصل</span><div class="sym">Nn</div><div class="name">n8n</div><div class="desc">المايسترو الذي يربط كل شيء: جدولة، نشر، مراقبة.</div></div>
+          <div class="tile cat-publish"><span class="num">14</span><div class="sym">Tg</div><div class="name">Telegram</div><div class="desc">أسهل قناة نشر وتفاعل مباشر — واجهة صديقك.</div></div>
+          <div class="tile cat-publish"><span class="num">15</span><div class="sym">Wa</div><div class="name">WhatsApp</div><div class="desc">مرحلة تالية — يحتاج WhatsApp Business API.</div></div>
+          <div class="tile cat-publish"><span class="num">16</span><div class="sym">Ig</div><div class="name">Instagram / FB</div><div class="desc">الأصعب — موافقات Meta؛ يُترك للنهاية.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="divider"></div></div>
+
+  <section>
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">مسار البناء</span>
+        <h2>خارطة التنفيذ — أربع مراحل</h2>
+        <p>كتفاعلٍ على مراحل: كل مرحلة «ناتجٌ» صالح للاستخدام بذاته، ومادّةٌ أوّلية للتي تليها. لست متعجّلاً — وهذا بالضبط ما يجعل النتيجة متينة.</p>
+      </div>
+      <div class="path">
+        <article class="phase p1">
+          <div class="idx">01</div>
+          <div>
+            <h3>القلب: الصديق الذي يتذكّرك</h3>
+            <div class="when">الأسبوع الأول · الأساس</div>
+            <p>وكيل على تيليجرام بشخصية «الباحث الكيميائي»، مزوّد بذاكرة دائمة. تستخدمه يومياً من اليوم الأول، وكل محادثة تعمّق معرفته بك.</p>
+            <ul>
+              <li>تفعيل Memory + Filesystem + Sequential Thinking</li>
+              <li>ربط بوت تيليجرام كواجهة محادثة</li>
+              <li>صياغة شخصية الوكيل وحدود سلوكه</li>
+            </ul>
+          </div>
+        </article>
+        <article class="phase p2">
+          <div class="idx">02</div>
+          <div>
+            <h3>العقل الباحث الموثوق</h3>
+            <div class="when">المصداقية العلمية</div>
+            <p>يتحوّل من محاور لطيف إلى باحثٍ يستشهد بمصادره — مع طبقة تحقّق كيميائي تحميك من نشر معلومة خاطئة باسمك.</p>
+            <ul>
+              <li>Tavily/Exa للبحث الموثّق + Fetch للقراءة العميقة</li>
+              <li>PubChem لضمان صحة المعادلات والمركّبات</li>
+              <li>قاعدة ذهبية: كل معلومة علمية بمصدر</li>
+            </ul>
+          </div>
+        </article>
+        <article class="phase p3">
+          <div class="idx">03</div>
+          <div>
+            <h3>مدير الأصول الرقمية</h3>
+            <div class="when">التنظيم والإنتاج</div>
+            <p>يُنظّم Drive، يصمّم عبر Canva، يفرز Gmail، ويجدول عبر Calendar — أصولك الرقمية تحت إدارة واحدة ذكية.</p>
+            <ul>
+              <li>تفعيل تكامل Drive + Canva + Notion معاً</li>
+              <li>هوية بصرية ثابتة لكل مخرجات المحتوى</li>
+              <li>أرشفة وتصنيف تلقائي للملفات الجديدة</li>
+            </ul>
+          </div>
+        </article>
+        <article class="phase p4">
+          <div class="idx">04</div>
+          <div>
+            <h3>مدير السوشيال ميديا</h3>
+            <div class="when">النشر متعدد المنصات</div>
+            <p>مع n8n كمايسترو: محرك محتوى كيميائي يولّد، يصمّم، يجدول، وينشر — يبدأ بتيليجرام ثم يتوسّع تدريجياً.</p>
+            <ul>
+              <li>«تفاعل اليوم» و«كيمياء من حولك» تلقائياً</li>
+              <li>سلاسل نشر مجدولة عبر n8n</li>
+              <li>توسّع لاحق: واتساب ← فيسبوك ← انستقرام</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="divider"></div></div>
+
+  <section>
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">القدرات</span>
+        <h2>ماذا سيفعل «كيميا» معك</h2>
+      </div>
+      <div class="caps">
+        <div class="cap"><div class="ic">// 01</div><h4>صديق مواكب</h4><p>يتذكّر تفضيلاتك ومشاريعك عبر كل التخصصات، ويحاورك بسياقٍ متراكم لا يُنسى.</p></div>
+        <div class="cap"><div class="ic">// 02</div><h4>باحث بمصداقية</h4><p>يجيب بمصادر موثّقة قابلة للتحقق، لا بتخمين — مع تخصّص كيميائي مدعوم بـPubChem.</p></div>
+        <div class="cap"><div class="ic">// 03</div><h4>مدير أصول</h4><p>ينظّم Drive، يصمّم في Canva، يفرز البريد، ويجدول يومك في مكانٍ واحد.</p></div>
+        <div class="cap"><div class="ic">// 04</div><h4>صانع محتوى</h4><p>يحوّل شغفك بالكيمياء إلى منشورات جذّابة صحيحة علمياً، جاهزة للنشر.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="guard stack">
+        <span class="eyebrow">الضمانة الحرجة</span>
+        <h3>طبقة التحقق العلمي</h3>
+        <p>نماذج الذكاء الاصطناعي تخطئ أحياناً في المعادلات والأرقام. ما يميّز «كيميا» عن أي بوت عادي — ويحمي سمعتك — هو طبقة تحقّق تعرض معادلاتها ومركّباتها على PubChem قبل النشر. لا معلومة كيميائية تخرج باسمك دون التحقق من مصدرها.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="start">
+        <span class="eyebrow">ابدأ هنا</span>
+        <h2>الخطوة الأولى العملية</h2>
+        <p style="color:var(--text-dim); margin-top:.7em; max-width:56ch;">المرحلة الأولى فقط — وكيلٌ على تيليجرام يتذكّرك. هذه الخطوات الثلاث تنقلنا من المخطط إلى نموذج تجرّبه بيدك.</p>
+        <div class="steps">
+          <div class="step"><div class="k">A</div><h4>تحديد الجمهور</h4><p>طلاب؟ جامعيون؟ عامة مهتمون؟ — يغيّر أسلوب المحتوى بالكامل.</p></div>
+          <div class="step"><div class="k">B</div><h4>تفعيل الذاكرة</h4><p>تركيب طبقة Memory + Filesystem كأساس دائم للوكيل.</p></div>
+          <div class="step"><div class="k">C</div><h4>ربط تيليجرام</h4><p>بوت تحاوره من هاتفك، فيبدأ التعلّم عنك من أول رسالة.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand">كيميا · مخطّط الوكيل الكيميائي</span>
+    <span>مرجعٌ حيّ — يتطوّر مع كل مرحلة نبنيها معاً</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var c = document.getElementById('mol');
+  if (!c || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var ctx = c.getContext('2d'), DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var nodes = [], N = 0, W, H;
+  function accent() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--teal').trim() || '#2fd6c4';
+  }
+  function resize() {
+    W = c.clientWidth; H = c.clientHeight;
+    c.width = W * DPR; c.height = H * DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+    N = Math.max(26, Math.round(W * H / 26000));
+    nodes = [];
+    for (var i=0;i<N;i++) nodes.push({
+      x: Math.random()*W, y: Math.random()*H,
+      vx:(Math.random()-.5)*.28, vy:(Math.random()-.5)*.28,
+      r: Math.random()*1.6+1.1
+    });
+  }
+  function step() {
+    ctx.clearRect(0,0,W,H);
+    var col = accent();
+    for (var i=0;i<N;i++){
+      var a=nodes[i]; a.x+=a.vx; a.y+=a.vy;
+      if(a.x<0||a.x>W)a.vx*=-1; if(a.y<0||a.y>H)a.vy*=-1;
+      for(var j=i+1;j<N;j++){
+        var b=nodes[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.hypot(dx,dy);
+        if(d<118){
+          ctx.globalAlpha=(1-d/118)*.32;
+          ctx.strokeStyle=col; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha=.9;
+    for(var k=0;k<N;k++){
+      var n=nodes[k];
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,6.283); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(step);
+  }
+  window.addEventListener('resize', resize);
+  resize(); step();
+})();
+</script>
