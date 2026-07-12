@@ -18,7 +18,7 @@
    إرسال ردّ كيميا (Telegram)
 ```
 
-- **المحرّك:** `models/gemini-2.5-flash` — سريع واقتصادي. قابل للترقية لأحدث Gemini أو التبديل لـ Claude بإضافة مفتاح Anthropic.
+- **المحرّك:** `models/gemini-3.1-pro-preview` — الطراز الرائد للدقّة العالية (مناسب لمفتاح Gemini المدفوع). يمكن خفضه إلى `gemini-3.1-flash-lite` للتوفير، أو التبديل لـ Claude بإضافة مفتاح Anthropic.
 - **الذاكرة:** نافذة محادثة بطول 12 تفاعلاً، منفصلة لكل طالب عبر معرّف المحادثة (`message.chat.id`).
 - **الشخصية:** نسخة عملية من [`../persona/kimya-system-prompt.md`](../persona/kimya-system-prompt.md) مضمّنة في عقدة الوكيل.
 

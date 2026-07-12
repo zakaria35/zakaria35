@@ -5,7 +5,7 @@
  * بشخصية «كيميا»، مع ذاكرة محادثة منفصلة لكل طالب (مفتاحها معرّف المحادثة).
  *
  * معرّف الـWorkflow في n8n: nSx6rKHG4e4cUO0Z
- * المحرّك: Google Gemini (models/gemini-2.5-flash) — قابل للتبديل بـ Claude لاحقاً.
+ * المحرّك: Google Gemini (models/gemini-3.1-pro-preview) — طراز رائد للدقّة، قابل للتبديل بـ Claude لاحقاً.
  *
  * هذا الملف نسخة موثّقة للمراجعة والنسخ الاحتياطي. المصدر الحيّ في n8n.
  */
@@ -30,7 +30,7 @@ const geminiModel = languageModel({
   version: 1.1,
   config: {
     name: 'محرّك كيميا (Gemini)',
-    parameters: { modelName: 'models/gemini-2.5-flash' },
+    parameters: { modelName: 'models/gemini-3.1-pro-preview' },
     credentials: { googlePalmApi: newCredential('Google Gemini(PaLM) Api account', 'f7m8ADfAo4EFnwIX') },
     position: [360, 540]
   }
