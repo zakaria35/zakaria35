@@ -1,0 +1,231 @@
+{
+  "name": "WhatsApp Chemistry Tutor - Prof. Zakaria",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-tutor",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "1. WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "whatsapp-tutor"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================== استخراج بيانات الرسالة من WhatsApp Cloud API ==================\n// هذه العقدة تلتقط نص الرسالة ورقم هاتف الطالب من الحقول العميقة للـ webhook\n\nconst body = $input.first().json.body || $input.first().json;\n\n// المسار القياسي في WhatsApp Cloud API\nconst entry   = body?.entry?.[0];\nconst change  = entry?.changes?.[0];\nconst value   = change?.value;\nconst message = value?.messages?.[0];\n\n// إذا لم يكن هناك رسالة (مثل تحديث حالة delivered/read) نُعلّم العنصر بأنه غير صالح\nif (!message) {\n  return [{\n    json: {\n      isValidTextMessage: false,\n      reason: 'no_message_object (probably a status update)'\n    }\n  }];\n}\n\nconst messageType = message.type;                       // text / image / audio ...\nconst senderNumber = message.from;                      // رقم هاتف الطالب\nconst messageBody = message.text?.body || '';           // نص الرسالة\nconst phoneNumberId = value?.metadata?.phone_number_id; // معرف رقم واتساب الخاص بك\n\nreturn [{\n  json: {\n    isValidTextMessage: messageType === 'text' && messageBody.trim().length > 0,\n    messageType,\n    senderNumber,\n    messageBody,\n    phoneNumberId\n  }\n}];"
+      },
+      "id": "extract-node",
+      "name": "2. Extract Message Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "is-text-condition",
+              "leftValue": "={{ $json.isValidTextMessage }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-node",
+      "name": "3. Is Text Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-goog-api-key",
+              "value": "YOUR_GEMINI_API_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  system_instruction: {\n    parts: [\n      {\n        text: \"أنت مساعد تعليمي ذكي مخصص لمساعدة طلاب الصفين الحادي عشر والثاني عشر في مادة الكيمياء. أنت تعمل كمساعد للأستاذ زكريا.\\nمهمتك:\\n- الإجابة على أسئلة الكيمياء بشكل دقيق، علمي، ومبسط.\\n- استخدم أسلوباً مشجعاً ويحفز على الفهم.\\n- إذا سأل الطالب سؤالاً خارج المنهج أو خارج تخصص الكيمياء، أو استفسر عن أمور إدارية، اعتذر بلباقة وأخبره أنك مبرمج للإجابة على أسئلة الكيمياء فقط، واطلب منه توجيه السؤال للأستاذ زكريا مباشرة.\"\n      }\n    ]\n  },\n  contents: [\n    {\n      role: \"user\",\n      parts: [ { text: $json.messageBody } ]\n    }\n  ],\n  generationConfig: {\n    temperature: 0.7,\n    maxOutputTokens: 1024\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "gemini-node",
+      "name": "4. Gemini AI (Brain)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================== تنظيف استجابة Gemini قبل إرسالها لواتساب ==================\n// نستخرج النص من الهيكل العميق ونتعامل مع حالات الحظر (safety) أو الاستجابة الفارغة\n\nconst response = $input.first().json;\n\n// المسار القياسي لنص الرد في Gemini\nlet answer = response?.candidates?.[0]?.content?.parts?.[0]?.text;\n\n// حالة رفض/حظر المحتوى أو استجابة فارغة\nif (!answer || answer.trim() === '') {\n  answer = 'عذراً، لم أتمكن من توليد إجابة لهذا السؤال. الرجاء إعادة صياغته أو توجيهه للأستاذ زكريا مباشرة.';\n}\n\n// تنظيف بسيط: إزالة أي مسافات زائدة في البداية/النهاية\nanswer = answer.trim();\n\n// حد أقصى لطول رسالة واتساب (~4096 حرف)\nif (answer.length > 4000) {\n  answer = answer.substring(0, 3990) + '...';\n}\n\n// نمرر رقم الطالب (نستدعيه من عقدة الاستخراج للحفاظ عليه)\nconst senderNumber = $('2. Extract Message Data').first().json.senderNumber;\nconst phoneNumberId = $('2. Extract Message Data').first().json.phoneNumberId;\n\nreturn [{\n  json: {\n    answer,\n    senderNumber,\n    phoneNumberId\n  }\n}];"
+      },
+      "id": "clean-node",
+      "name": "5. Clean Gemini Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/YOUR_PHONE_NUMBER_ID/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_TOKEN_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  messaging_product: \"whatsapp\",\n  recipient_type: \"individual\",\n  to: $json.senderNumber,\n  type: \"text\",\n  text: {\n    preview_url: false,\n    body: $json.answer\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "whatsapp-send-node",
+      "name": "6. Send WhatsApp Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        220
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "noop-node",
+      "name": "Ignore (Status/Non-Text)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        900,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "1. WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "2. Extract Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Extract Message Data": {
+      "main": [
+        [
+          {
+            "node": "3. Is Text Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Is Text Message?": {
+      "main": [
+        [
+          {
+            "node": "4. Gemini AI (Brain)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignore (Status/Non-Text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Gemini AI (Brain)": {
+      "main": [
+        [
+          {
+            "node": "5. Clean Gemini Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Clean Gemini Response": {
+      "main": [
+        [
+          {
+            "node": "6. Send WhatsApp Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "WhatsApp"
+    },
+    {
+      "name": "Chemistry"
+    }
+  ]
+}
