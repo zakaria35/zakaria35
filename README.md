@@ -34,13 +34,26 @@
 ```
 .
 ├── README.md                       # هذا الملف
+├── .mcp.json                       # خوادم MCP المُفعّلة في المستودع
 ├── persona/
 │   └── kimya-system-prompt.md      # روح الوكيل وعقله (System Prompt)
 ├── docs/
 │   └── roadmap.md                  # خارطة الطريق التفصيلية بالمراحل
-├── workflows/                      # سير عمل n8n (يُضاف عند البناء)
+├── workflows/                      # سير عمل n8n
+├── tools/
+│   └── markitdown/                 # تحويل مصادر المنهاج إلى Markdown
+├── knowledge/
+│   ├── raw/                        # ملفات المنهاج الأصلية (محلّية، خارج Git)
+│   └── md/                         # النصّ المحوّل — قاعدة معرفة كيميا
 └── kimya-blueprint.html            # المخطّط المعماري البصري
 ```
+
+## الأدوات
+
+| الأداة | الوظيفة | الوثائق |
+| --- | --- | --- |
+| **MarkItDown** | تحويل الكتاب الوزاري والامتحانات (PDF · Word · PowerPoint · صور) إلى Markdown يقرأه كيميا | [`tools/markitdown/`](tools/markitdown/README.md) |
+| **MarkItDown MCP** | تحويل فوري لأيّ ملف أو رابط داخل المحادثة — مُفعّل هنا، ويُعمَّم على كافّة المشاريع بأمر واحد | [`tools/markitdown/`](tools/markitdown/README.md#الاستعمال-الثاني-خادم-mcp--تحويل-فوري-في-أي-مشروع) |
 
 ## الحالة
 

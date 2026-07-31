@@ -1,0 +1,3 @@
+# أداة تحويل مصادر المنهاج إلى Markdown لقاعدة معرفة كيميا.
+# المشروع الأصلي: https://github.com/microsoft/markitdown (رخصة MIT)
+markitdown[pdf,docx,pptx,xlsx]==0.1.7
