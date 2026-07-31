@@ -34,6 +34,7 @@
 ```
 .
 ├── README.md                       # هذا الملف
+├── .mcp.json                       # خوادم MCP المُفعّلة في المستودع
 ├── persona/
 │   └── kimya-system-prompt.md      # روح الوكيل وعقله (System Prompt)
 ├── docs/
@@ -52,6 +53,7 @@
 | الأداة | الوظيفة | الوثائق |
 | --- | --- | --- |
 | **MarkItDown** | تحويل الكتاب الوزاري والامتحانات (PDF · Word · PowerPoint · صور) إلى Markdown يقرأه كيميا | [`tools/markitdown/`](tools/markitdown/README.md) |
+| **MarkItDown MCP** | تحويل فوري لأيّ ملف أو رابط داخل المحادثة — مُفعّل هنا، ويُعمَّم على كافّة المشاريع بأمر واحد | [`tools/markitdown/`](tools/markitdown/README.md#الاستعمال-الثاني-خادم-mcp--تحويل-فوري-في-أي-مشروع) |
 
 ## الحالة
 
