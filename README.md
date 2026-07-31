@@ -38,9 +38,20 @@
 │   └── kimya-system-prompt.md      # روح الوكيل وعقله (System Prompt)
 ├── docs/
 │   └── roadmap.md                  # خارطة الطريق التفصيلية بالمراحل
-├── workflows/                      # سير عمل n8n (يُضاف عند البناء)
+├── workflows/                      # سير عمل n8n
+├── tools/
+│   └── markitdown/                 # تحويل مصادر المنهاج إلى Markdown
+├── knowledge/
+│   ├── raw/                        # ملفات المنهاج الأصلية (محلّية، خارج Git)
+│   └── md/                         # النصّ المحوّل — قاعدة معرفة كيميا
 └── kimya-blueprint.html            # المخطّط المعماري البصري
 ```
+
+## الأدوات
+
+| الأداة | الوظيفة | الوثائق |
+| --- | --- | --- |
+| **MarkItDown** | تحويل الكتاب الوزاري والامتحانات (PDF · Word · PowerPoint · صور) إلى Markdown يقرأه كيميا | [`tools/markitdown/`](tools/markitdown/README.md) |
 
 ## الحالة
 
