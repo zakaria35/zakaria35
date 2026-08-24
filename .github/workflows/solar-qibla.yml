@@ -1,0 +1,98 @@
+# بناء واختبار تطبيق "قِبلة الشمس".
+#
+# سبب وجود هذا الملف: بيئة التطوير التي بُني فيها التطبيق محجوبة عن
+# dl.google.com، فتعذّر تثبيت Android SDK وتعذّر التحقّق من تجميع كود
+# Kotlin ومن بناء APK. مشغّلات GitHub تحمل Android SDK جاهزًا، فتغطّي
+# هذه الفجوة بالضبط.
+
+name: قِبلة الشمس — بناء واختبار
+
+on:
+  push:
+    branches:
+      - claude/solar-qibla-app-jd1y16
+    paths:
+      - 'solar_qibla/**'
+      - '.github/workflows/solar-qibla.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: solar_qibla
+
+jobs:
+  build:
+    name: تحليل واختبار وبناء APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: جلب المستودع
+        uses: actions/checkout@v4
+
+      # AGP 8.x يتطلّب JDK 17 فأحدث.
+      - name: تهيئة JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: تهيئة Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+          cache: true
+
+      - name: إصدارات الأدوات
+        run: |
+          flutter --version
+          java -version
+
+      - name: جلب الاعتماديات
+        run: flutter pub get
+
+      - name: التحليل الساكن
+        run: flutter analyze
+
+      # الاختبارات تُشغَّل تحت عدّة مناطق زمنية عمدًا: خطأ في حساب رقم
+      # اليوم كان يظهر في مناطق التوقيت الصيفي وحدها ويختفي تحت UTC.
+      - name: الاختبارات — UTC
+        env:
+          TZ: UTC
+        run: flutter test
+
+      - name: الاختبارات — آسيا/غزة
+        env:
+          TZ: Asia/Gaza
+        run: flutter test
+
+      - name: الاختبارات — أمريكا/سانتياغو
+        env:
+          TZ: America/Santiago
+        run: flutter test
+
+      # هذه هي الخطوة التي تعذّرت محليًا: تجميع Kotlin وبناء الحزمة.
+      - name: بناء APK للتنقيح
+        run: flutter build apk --debug
+
+      - name: بناء APK للإصدار
+        run: flutter build apk --release
+
+      - name: أحجام الحزم الناتجة
+        run: ls -lh build/app/outputs/flutter-apk/
+
+      - name: رفع حزمة الإصدار
+        uses: actions/upload-artifact@v4
+        with:
+          name: solar-qibla-release-apk
+          path: solar_qibla/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: رفع حزمة التنقيح
+        uses: actions/upload-artifact@v4
+        with:
+          name: solar-qibla-debug-apk
+          path: solar_qibla/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
