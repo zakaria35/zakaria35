@@ -24,6 +24,14 @@ const double kOnTargetThreshold = 3.0;
 /// حدّ النطاق الأصفر [درجة].
 const double kCloseThreshold = 10.0;
 
+/// عتبة **الخروج** من حالة المطابقة [درجة].
+///
+/// أوسع من عتبة الدخول عمدًا (تخلفية). قراءة البوصلة تتذبذب بطبيعتها بدرجة
+/// أو أقلّ حتى مع الترشيح؛ لو كانت عتبتا الدخول والخروج واحدة لتذبذبت الحالة
+/// حول ‎3°‎ فانطلق الاهتزاز مرارًا في يد الفنّي. الدخول يبقى عند ‎3°‎ كما
+/// تنصّ المواصفات، والخروج وحده هو المتساهل.
+const double kOnTargetExitThreshold = 4.5;
+
 /// يصنّف انحرافًا مطلقًا إلى نطاق لوني.
 AlignmentBand bandForDeviation(double deviationDegrees) {
   final double magnitude = deviationDegrees.abs();
@@ -113,6 +121,18 @@ class AimingGuidance {
 
   /// هل بلغ اللوح الوضع الأمثل في المحورين؟
   bool get isOnTarget => band == AlignmentBand.onTarget;
+
+  /// أسوأ انحراف مطلق بين المحورين [درجة]، أو null إذا تعذّرت قراءة السمت.
+  ///
+  /// هو المقياس الذي تُبنى عليه التخلفية في الواجهة: المطابقة تتطلّب
+  /// المحورين معًا، فالأسوأ منهما هو الحاكم.
+  double? get worstDeviation {
+    final double? azimuth = azimuthDeviation;
+    if (azimuth == null) return null;
+    final double tilt = tiltDeviation.abs();
+    final double compass = azimuth.abs();
+    return tilt >= compass ? tilt : compass;
+  }
 
   /// تعليمة السمت بالعربية، مع الوحدة.
   String get azimuthInstruction {

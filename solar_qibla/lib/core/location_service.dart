@@ -112,14 +112,6 @@ class SiteLocation {
       source: LocationSource.cached,
     );
   }
-
-  SiteLocation copyWith({LocationSource? source}) => SiteLocation(
-        latitude: latitude,
-        longitude: longitude,
-        altitude: altitude,
-        timeZoneOffsetHours: timeZoneOffsetHours,
-        source: source ?? this.source,
-      );
 }
 
 /// نتيجة محاولة تحديد الموقع: إمّا موقع، وإمّا سبب إخفاق.

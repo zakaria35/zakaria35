@@ -146,8 +146,12 @@ class AppState extends ChangeNotifier {
   SavedReading? _savedReading;
   SavedReading? get savedReading => _savedReading;
 
-  /// تدفّق قراءات التوجيه.
-  Stream<PanelReading> get readings => _orientationService.readings();
+  /// يفتح تدفّق قراءات التوجيه.
+  ///
+  /// دالة لا خاصية عمدًا: الاستدعاء يصفّر مرشّحات التنعيم ليبدأ الاشتراك
+  /// الجديد نظيفًا، واستدعاؤه مرّتين بلا قصد يُفسد الترشيح. الدالة تجعل
+  /// الأثر الجانبي ظاهرًا في موضع النداء.
+  Stream<PanelReading> readings() => _orientationService.readings();
 
   /// يستقبل قراءة جديدة من التدفّق.
   void updateReading(PanelReading value) {

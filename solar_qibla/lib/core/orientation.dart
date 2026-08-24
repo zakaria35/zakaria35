@@ -173,23 +173,6 @@ class PanelReading {
   /// هل يمكن الوثوق بقراءة الاتجاه في هذه اللحظة؟
   bool get isUsable =>
       azimuthReliable && !accuracy.needsCalibration && declination != null;
-
-  PanelReading copyWith({
-    double? tilt,
-    double? magneticAzimuth,
-    double? declination,
-    double? calibrationOffset,
-    bool? azimuthReliable,
-    CompassAccuracy? accuracy,
-  }) =>
-      PanelReading(
-        tilt: tilt ?? this.tilt,
-        magneticAzimuth: magneticAzimuth ?? this.magneticAzimuth,
-        declination: declination ?? this.declination,
-        calibrationOffset: calibrationOffset ?? this.calibrationOffset,
-        azimuthReliable: azimuthReliable ?? this.azimuthReliable,
-        accuracy: accuracy ?? this.accuracy,
-      );
 }
 
 /// مرشّح تمرير منخفض أُسّي (EMA) صالح للزوايا الدائرية.

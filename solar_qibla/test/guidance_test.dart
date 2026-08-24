@@ -126,6 +126,79 @@ void main() {
   });
 
   // ═════════════════════════════════════════════════════════════════════════
+  group('أسوأ انحراف والتخلفية', () {
+    test('الأسوأ بين المحورين هو الحاكم', () {
+      final AimingGuidance tiltWorse = computeGuidance(
+        reading: readingAt(tilt: 38.0, azimuth: 182.0),
+        targetTilt: 30.0,
+        targetAzimuth: 180.0,
+      );
+      expect(tiltWorse.worstDeviation, closeTo(8.0, 1e-9));
+
+      final AimingGuidance azimuthWorse = computeGuidance(
+        reading: readingAt(tilt: 31.0, azimuth: 165.0),
+        targetTilt: 30.0,
+        targetAzimuth: 180.0,
+      );
+      expect(azimuthWorse.worstDeviation, closeTo(15.0, 1e-9));
+    });
+
+    test('يساوي null إذا تعذّرت قراءة السمت', () {
+      final AimingGuidance g = computeGuidance(
+        reading: readingAt(tilt: 30.0, azimuth: 180.0, azimuthReliable: false),
+        targetTilt: 30.0,
+        targetAzimuth: 180.0,
+      );
+      expect(g.worstDeviation, isNull);
+    });
+
+    test('عتبة الخروج أوسع من عتبة الدخول', () {
+      // بلا هذا الفارق تتذبذب حالة المطابقة حول ‎3°‎ فينطلق الاهتزاز مرارًا.
+      expect(kOnTargetExitThreshold, greaterThan(kOnTargetThreshold));
+    });
+
+    test('محاكاة التخلفية: اهتزاز واحد لا سلسلة اهتزازات', () {
+      // قراءات تتذبذب حول عتبة الدخول تمامًا، كما يحدث في الميدان.
+      const List<double> deviations = <double>[
+        8.0, 5.0, 2.9, 3.1, 2.8, 3.4, 2.7, 4.0, 2.9, 4.4, 3.0,
+      ];
+
+      bool wasOnTarget = false;
+      int buzzes = 0;
+      for (final double deviation in deviations) {
+        final bool onTarget = deviation <=
+            (wasOnTarget ? kOnTargetExitThreshold : kOnTargetThreshold);
+        if (onTarget && !wasOnTarget) buzzes++;
+        wasOnTarget = onTarget;
+      }
+      expect(buzzes, 1);
+
+      // وبعتبة واحدة لكانت النتيجة اهتزازات متكرّرة.
+      bool naive = false;
+      int naiveBuzzes = 0;
+      for (final double deviation in deviations) {
+        final bool onTarget = deviation <= kOnTargetThreshold;
+        if (onTarget && !naive) naiveBuzzes++;
+        naive = onTarget;
+      }
+      expect(naiveBuzzes, greaterThan(1));
+    });
+
+    test('الخروج الفعلي من النطاق يسمح باهتزاز جديد', () {
+      const List<double> deviations = <double>[2.0, 12.0, 2.0];
+      bool wasOnTarget = false;
+      int buzzes = 0;
+      for (final double deviation in deviations) {
+        final bool onTarget = deviation <=
+            (wasOnTarget ? kOnTargetExitThreshold : kOnTargetThreshold);
+        if (onTarget && !wasOnTarget) buzzes++;
+        wasOnTarget = onTarget;
+      }
+      expect(buzzes, 2);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════════
   group('المحور المجهول لا يُحسب مضبوطًا', () {
     test('السمت غير الموثوق يُسقط النطاق إلى "بعيد"', () {
       final AimingGuidance g = computeGuidance(

@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _subscription = widget.state.readings.listen(
+    _subscription = widget.state.readings().listen(
       widget.state.updateReading,
       onError: (Object _) {
         // انقطاع المستشعر لا يُسقط الشاشة؛ تبقى القراءة الأخيرة معروضة
@@ -49,8 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onStateChanged() {
-    final AimingGuidance? guidance = widget.state.guidance;
-    final bool onTarget = guidance?.isOnTarget ?? false;
+    final double? deviation = widget.state.guidance?.worstDeviation;
+
+    // تخلفية: الدخول عند ‎3°‎ والخروج عند ‎4.5°‎. بعتبة واحدة كانت القراءة
+    // المتذبذبة حول الحدّ تُطلق الاهتزاز مرارًا في يد الفنّي.
+    final bool onTarget = deviation != null &&
+        deviation <=
+            (_wasOnTarget ? kOnTargetExitThreshold : kOnTargetThreshold);
+
     if (onTarget && !_wasOnTarget) {
       HapticFeedback.mediumImpact();
     }
