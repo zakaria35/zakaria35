@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'guidance.dart';
+import 'irradiance_data.dart';
 import 'location_service.dart';
 import 'orientation.dart';
 import 'solar_math.dart';
@@ -22,11 +23,15 @@ class _OptimizationRequest {
   final int timeZoneOffsetHours;
   final int modeIndex;
 
+  /// معاملات التصحيح الشهرية المقيسة، أو null لاستعمال النموذج التقريبي.
+  final List<double>? monthlyScale;
+
   const _OptimizationRequest({
     required this.latitude,
     required this.longitude,
     required this.timeZoneOffsetHours,
     required this.modeIndex,
+    required this.monthlyScale,
   });
 }
 
@@ -37,6 +42,7 @@ List<double> _runOptimization(_OptimizationRequest request) {
     longitude: request.longitude,
     timeZoneOffsetHours: request.timeZoneOffsetHours,
     mode: OptimizationMode.values[request.modeIndex],
+    monthlyScale: request.monthlyScale,
   );
   return <double>[result.tilt, result.azimuth];
 }
@@ -46,8 +52,11 @@ class AppState extends ChangeNotifier {
   AppState({
     LocationService? locationService,
     OrientationService? orientationService,
+    IrradianceService? irradianceService,
     MethodChannel control = const MethodChannel('solar_qibla/control'),
   })  : _control = control,
+        _irradianceService =
+            irradianceService ?? IrradianceService(control: control),
         // القناة تُمرَّر إلى الخدمتين لا تُترك لافتراضهما: إغفال ذلك يجعل
         // الخدمتين تخاطبان قناة غير التي حُقنت، فتتعلّق الاستدعاءات إلى
         // الأبد في الاختبارات، ويصعب تتبّع السبب.
@@ -57,6 +66,7 @@ class AppState extends ChangeNotifier {
 
   final LocationService _locationService;
   final OrientationService _orientationService;
+  final IrradianceService _irradianceService;
   final MethodChannel _control;
 
   static const String _settingsKey = 'settings';
@@ -100,6 +110,30 @@ class AppState extends ChangeNotifier {
 
   bool _isOptimizing = false;
   bool get isOptimizing => _isOptimizing;
+
+  // ── بيانات الإشعاع المقيسة (اختيارية) ─────────────────────────────────
+  MonthlyIrradiance? _irradiance;
+
+  /// بيانات الإشعاع المقيسة المستعمَلة حاليًا، أو null فيُستعمل النموذج
+  /// التقريبي المدمج.
+  MonthlyIrradiance? get irradiance => _irradiance;
+
+  bool _isFetchingIrradiance = false;
+  bool get isFetchingIrradiance => _isFetchingIrradiance;
+
+  /// هل يستند حساب الزاوية الحالي إلى بيانات مقيسة؟
+  bool get usesMeasuredIrradiance => _activeMonthlyScale != null;
+
+  /// معاملات التصحيح الصالحة للموقع الحالي، أو null.
+  ///
+  /// البيانات المجلوبة لموقع بعيد لا تُستعمل لموقع آخر.
+  List<double>? get _activeMonthlyScale {
+    final MonthlyIrradiance? data = _irradiance;
+    final SiteLocation? site = _location;
+    if (data == null || site == null) return null;
+    if (!data.coversLocation(site.latitude, site.longitude)) return null;
+    return data.scaleFactors;
+  }
 
   // ── القراءة الحالية ───────────────────────────────────────────────────
   PanelReading? _reading;
@@ -171,6 +205,8 @@ class AppState extends ChangeNotifier {
   /// يستعيد الإعدادات والموقع المحفوظين ويحسب الهدف.
   Future<void> restore() async {
     await _loadSettings();
+    // البيانات المخزّنة تُحمَّل قبل الموقع كي يستعملها أوّل حساب للزاوية.
+    _irradiance = await _irradianceService.loadCached();
     final SiteLocation? cached = await _locationService.loadCached();
     if (cached != null) {
       await setLocation(cached);
@@ -295,6 +331,41 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
+  /// يحدّث بيانات الإشعاع من الشبكة ثم يعيد حساب الزاوية المثلى.
+  ///
+  /// يُرجع سبب الإخفاق أو null عند النجاح. عند الإخفاق لا يتغيّر شيء:
+  /// يبقى الحساب على ما كان — بيانات مخزّنة سابقًا أو النموذج التقريبي.
+  Future<IrradianceFetchFailure?> refreshIrradiance() async {
+    final SiteLocation? site = _location;
+    if (site == null) return IrradianceFetchFailure.network;
+
+    _isFetchingIrradiance = true;
+    notifyListeners();
+
+    final IrradianceResult result = await _irradianceService.fetch(
+      latitude: site.latitude,
+      longitude: site.longitude,
+    );
+
+    _isFetchingIrradiance = false;
+    if (!result.isSuccess) {
+      notifyListeners();
+      return result.failure;
+    }
+
+    _irradiance = result.data;
+    await _irradianceService.save(result.data!);
+    await _recomputeTarget();
+    return null;
+  }
+
+  /// يتجاهل البيانات المقيسة ويعود إلى النموذج التقريبي المدمج.
+  Future<void> useOfflineModel() async {
+    if (_irradiance == null) return;
+    _irradiance = null;
+    await _recomputeTarget();
+  }
+
   // ── الحساب ────────────────────────────────────────────────────────────
 
   Future<void> _recomputeTarget() async {
@@ -315,6 +386,7 @@ class AppState extends ChangeNotifier {
         longitude: site.longitude,
         timeZoneOffsetHours: site.timeZoneOffsetHours,
         modeIndex: _mode.index,
+        monthlyScale: _activeMonthlyScale,
       ),
     );
 

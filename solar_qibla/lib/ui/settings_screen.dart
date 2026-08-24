@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../core/app_state.dart';
 import '../core/guidance.dart';
+import '../core/irradiance_data.dart';
 import '../core/location_service.dart';
 import '../core/solar_math.dart';
 
@@ -139,6 +140,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Divider(height: 36, thickness: 1.5),
               _section('اتجاه اللوح وأبعاده'),
               _panelSection(state),
+              const Divider(height: 36, thickness: 1.5),
+              _section('بيانات الإشعاع'),
+              _irradianceSection(state),
             ],
           ),
         );
@@ -298,6 +302,105 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
+
+  Future<void> _refreshIrradiance() async {
+    final IrradianceFetchFailure? failure =
+        await widget.state.refreshIrradiance();
+    if (!mounted) return;
+    _notify(failure == null
+        ? 'تم تحديث بيانات الإشعاع وإعادة حساب الزاوية'
+        : irradianceFailureMessage(failure));
+  }
+
+  Widget _irradianceSection(AppState state) {
+    final MonthlyIrradiance? data = state.irradiance;
+    final bool measured = state.usesMeasuredIrradiance;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: measured
+                ? const Color(0xFFE8F5E9)
+                : const Color(0xFFF1F3F4),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: measured ? const Color(0xFF0F7B3F) : const Color(0xFFBDBDBD),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Text(
+                measured
+                    ? 'المصدر الحالي: بيانات مقيسة (NASA POWER)'
+                    : 'المصدر الحالي: النموذج التقريبي المدمج',
+                style: const TextStyle(
+                    fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              if (measured && data != null)
+                Text(
+                  'سنة البيانات: ${data.year}\n'
+                  'آخر تحديث: ${_formatDate(data.fetchedAt)}',
+                  style: const TextStyle(fontSize: 16),
+                )
+              else
+                const Text(
+                  'نموذج سماء صافية مبسّط: يهمل الغيوم والغبار وبخار الماء. '
+                  'التطبيق يعمل به كاملًا بلا إنترنت.',
+                  style: TextStyle(fontSize: 15, height: 1.5),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 54,
+          child: OutlinedButton.icon(
+            onPressed: state.location == null || state.isFetchingIrradiance
+                ? null
+                : _refreshIrradiance,
+            icon: state.isFetchingIrradiance
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  )
+                : const Icon(Icons.cloud_download_outlined, size: 24),
+            label: Text(
+              state.isFetchingIrradiance
+                  ? 'يجري التحديث…'
+                  : 'تحديث بيانات الإشعاع (يتطلّب إنترنت)',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        if (measured) ...<Widget>[
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 50,
+            child: TextButton(
+              onPressed: state.useOfflineModel,
+              child: const Text(
+                'العودة إلى النموذج المدمج',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static String _formatDate(DateTime value) =>
+      '${value.year}-${value.month.toString().padLeft(2, '0')}-'
+      '${value.day.toString().padLeft(2, '0')} '
+      '${value.hour.toString().padLeft(2, '0')}:'
+      '${value.minute.toString().padLeft(2, '0')}';
 
   Widget _panelSection(AppState state) {
     final RowLayout? layout = state.rowLayout;

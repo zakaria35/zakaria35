@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- الإنترنت: لتحديث بيانات الإشعاع المقيسة فقط، وهي تحسين اختياري.
+         التطبيق يعمل كاملًا بدونه على النموذج المدمج. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- مستشعرات التوجيه. required=false كي لا يُستبعد التطبيق من متجر
          التطبيقات على أجهزة تفتقر إلى البوصلة؛ يُتحقّق من توفّرها تشغيليًا. -->
     <uses-feature

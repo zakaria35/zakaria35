@@ -49,7 +49,8 @@ class AboutScreen extends StatelessWidget {
             '• هندسة السطح المائل وزاوية السقوط وتباعد الصفوف: '
             'Duffie & Beckman، «Solar Engineering of Thermal Processes».\n\n'
             '• الانحراف المغناطيسي: النموذج المغناطيسي العالمي عبر '
-            'android.hardware.GeomagneticField.',
+            'android.hardware.GeomagneticField.\n\n'
+            '• بيانات الإشعاع المقيسة (اختيارية): NASA POWER.',
             style: TextStyle(fontSize: 17, height: 1.7),
           ),
           SizedBox(height: 28),
@@ -69,7 +70,10 @@ class AboutScreen extends StatelessWidget {
           Text(
             'التطبيق يعمل كاملًا بلا اتصال. كل الحسابات تجري على الجهاز، '
             'والخط العربي مضمَّن في التطبيق لا مُحمَّل عبر الشبكة. عند تعذّر '
-            'GPS يمكن إدخال خط العرض وخط الطول يدويًا.',
+            'GPS يمكن إدخال خط العرض وخط الطول يدويًا.\n\n'
+            'تحديث بيانات الإشعاع من NASA POWER تحسين اختياري وحده يتطلّب '
+            'اتصالًا. عند تعذّره يُستعمل النموذج المدمج بلا انقطاع في الخدمة، '
+            'والبيانات المجلوبة تُخزَّن محليًا فتبقى متاحة بعد ذلك بلا اتصال.',
             style: TextStyle(fontSize: 17, height: 1.7),
           ),
           SizedBox(height: 28),

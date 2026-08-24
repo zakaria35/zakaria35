@@ -531,17 +531,32 @@ const int _timeStepMinutes = 15;
 /// يستغرق ذلك ثوانيَ معدودة، لذا يجب تشغيله خارج خيط الواجهة (Isolate).
 ///
 /// [year] السنة المستخدمة لتوليد الأيام؛ يُفضّل سنة غير كبيسة للاتّساق.
-/// يرمي [ArgumentError] إذا مُرِّر [OptimizationMode.manual].
+///
+/// [monthlyScale] معاملات تصحيح شهرية اختيارية (12 عنصرًا، يناير أوّلًا).
+/// عند تمريرها يُضرب إشعاع كل لحظة في معامل شهرها، فيُصحَّح التوزيع الموسمي
+/// للطاقة ببيانات مقيسة بدل نموذج السماء الصافية التقريبي، مع الإبقاء على
+/// شكل المنحنى اليومي من النموذج. تمريرها لا يغيّر شيئًا إن كانت كلّها 1.
+///
+/// يرمي [ArgumentError] إذا مُرِّر [OptimizationMode.manual]، أو إذا لم تكن
+/// [monthlyScale] من اثني عشر عنصرًا.
 Orientation findOptimalOrientation({
   required double latitude,
   required double longitude,
   required int timeZoneOffsetHours,
   required OptimizationMode mode,
   int year = 2025,
+  List<double>? monthlyScale,
 }) {
   if (mode == OptimizationMode.manual) {
     throw ArgumentError(
       'الوضع اليدوي لا يُحسب عدديًا — الزاوية يُدخلها المستخدم.',
+    );
+  }
+  if (monthlyScale != null && monthlyScale.length != 12) {
+    throw ArgumentError.value(
+      monthlyScale.length,
+      'monthlyScale',
+      'يجب أن تحوي معاملات التصحيح الشهرية اثني عشر عنصرًا',
     );
   }
   final Set<int> months = monthsForMode(mode);
@@ -578,10 +593,11 @@ Orientation findOptimalOrientation({
       );
       if (!sun.isDaylight) continue;
 
-      final double gb = clearSkyBeamIrradianceForDay(
+      double gb = clearSkyBeamIrradianceForDay(
         n: n,
         zenithDegrees: sun.zenith,
       );
+      if (monthlyScale != null) gb *= monthlyScale[day.month - 1];
       if (gb <= 0.0) continue;
 
       final double sz = _sinD(sun.zenith);
