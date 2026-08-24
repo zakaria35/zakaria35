@@ -337,6 +337,7 @@ class AppState extends ChangeNotifier {
   /// يبقى الحساب على ما كان — بيانات مخزّنة سابقًا أو النموذج التقريبي.
   Future<IrradianceFetchFailure?> refreshIrradiance() async {
     final SiteLocation? site = _location;
+    // الزرّ معطَّل بلا موقع؛ هذا حارس دفاعي لا مسار متوقَّع.
     if (site == null) return IrradianceFetchFailure.network;
 
     _isFetchingIrradiance = true;
@@ -360,6 +361,9 @@ class AppState extends ChangeNotifier {
   }
 
   /// يتجاهل البيانات المقيسة ويعود إلى النموذج التقريبي المدمج.
+  ///
+  /// أثره في هذه الجلسة فقط: البيانات المخزّنة تبقى محفوظة وتُستعاد عند
+  /// التشغيل التالي. المقصود المقارنة بين المصدرين لا حذف ما جُلب.
   Future<void> useOfflineModel() async {
     if (_irradiance == null) return;
     _irradiance = null;
