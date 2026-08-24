@@ -71,11 +71,19 @@ double angularDifference(double from, double to) {
 
 /// رقم اليوم في السنة N (1 = 1 يناير).
 ///
-/// يُرجع 366 في السنوات الكبيسة ليوم 31 ديسمبر؛ المعادلات التقريبية أدناه
-/// وُضعت لسنة من 365 يومًا، والفرق الناتج أقل من خطأها الأصلي.
+/// يُرجع 366 في السنوات الكبيسة ليوم 31 ديسمبر.
+///
+/// الحساب يجري بالكامل في UTC **عمدًا**، ولو كان التاريخ الممرَّر محليًا:
+/// الفرق بين تاريخين محليّين يعبر انتقال التوقيت الصيفي ينقص ساعة، فيُقرّب
+/// `inDays` إلى الأسفل ويُنقص رقم اليوم واحدًا. في منطقة مثل آسيا/غزة يصيب
+/// هذا الخطأ نحو ‎192‎ يومًا من السنة — كل يوم بين بداية التوقيت الصيفي
+/// ونهايته. وUTC بلا توقيت صيفي، فحسابها مضبوط دائمًا.
+///
+/// تُقرأ حقول التاريخ كما هي دون تحويل منطقة زمنية، فرقم اليوم خاصية
+/// تقويمية للتاريخ المعروض لا للحظة الزمنية المطلقة.
 int dayOfYear(DateTime date) {
-  final DateTime startOfYear = DateTime(date.year, 1, 1);
-  final DateTime day = DateTime(date.year, date.month, date.day);
+  final DateTime startOfYear = DateTime.utc(date.year, 1, 1);
+  final DateTime day = DateTime.utc(date.year, date.month, date.day);
   return day.difference(startOfYear).inDays + 1;
 }
 
@@ -571,7 +579,9 @@ Orientation findOptimalOrientation({
   final int daysInYear = dayOfYear(DateTime(year, 12, 31));
 
   for (int n = 1; n <= daysInYear; n++) {
-    final DateTime day = DateTime(year, 1, 1).add(Duration(days: n - 1));
+    // UTC هنا كذلك: جمع المدد على تاريخ محلي عبر انتقال التوقيت الصيفي
+    // قد يزحزح اليوم التقويمي، فتصير نتيجة المحسِّن تابعة لمنطقة الجهاز.
+    final DateTime day = DateTime.utc(year, 1, 1).add(Duration(days: n - 1));
     if (!months.contains(day.month)) continue;
 
     for (int minute = 0; minute < 24 * 60; minute += _timeStepMinutes) {

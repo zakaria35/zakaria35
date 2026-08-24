@@ -244,6 +244,43 @@ void main() {
       expect(dayOfYear(DateTime(2024, 12, 31)), 366); // سنة كبيسة
       expect(dayOfYear(DateTime(2026, 3, 21)), 80);
     });
+
+    test('رقم اليوم مستقلّ عن التوقيت الصيفي في منطقة الجهاز', () {
+      // اختبار انحدار: كان الحساب يجري بتواريخ محلية، والفرق بين تاريخين
+      // يعبر انتقال التوقيت الصيفي ينقص ساعة فيُقرَّب `inDays` إلى الأسفل.
+      // في آسيا/غزة كان ذلك يُخطئ في نحو ‎192‎ يومًا من السنة، ولم تكشفه
+      // الاختبارات لأن آلة التطوير على UTC.
+      //
+      // المرجع هنا محسوب من أطوال الأشهر، فلا يعتمد على أي منطقة زمنية.
+      const List<int> monthLengths = <int>[
+        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+      ];
+      int expected = 0;
+      for (int month = 1; month <= 12; month++) {
+        for (int day = 1; day <= monthLengths[month - 1]; day++) {
+          expected++;
+          expect(
+            dayOfYear(DateTime(2026, month, day)),
+            expected,
+            reason: 'التاريخ المحلي 2026-$month-$day',
+          );
+          expect(
+            dayOfYear(DateTime.utc(2026, month, day)),
+            expected,
+            reason: 'التاريخ العالمي 2026-$month-$day',
+          );
+        }
+      }
+      expect(expected, 365);
+    });
+
+    test('السنة كاملة في المحسِّن مهما كانت منطقة الجهاز', () {
+      // كان `daysInYear` يساوي 364 في مناطق التوقيت الصيفي، فيسقط
+      // 31 ديسمبر من الحساب صامتًا.
+      expect(dayOfYear(DateTime(2025, 12, 31)), 365);
+      expect(dayOfYear(DateTime(2026, 12, 31)), 365);
+      expect(dayOfYear(DateTime(2028, 12, 31)), 366);
+    });
   });
 
   // ═════════════════════════════════════════════════════════════════════════
