@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   geolocator: ^14.0.3
+  wakelock_plus: ^1.7.0
 
 dev_dependencies:
   flutter_test:
@@ -18,3 +19,20 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/fonts/OFL.txt
+
+  # خط عربي مضمَّن لا مُحمَّل عبر الشبكة: التطبيق ميداني ويجب أن يعمل
+  # كاملًا بلا إنترنت. حزمة google_fonts تجلب الخط عند أول استعمال،
+  # فتسقط إلى الخط الافتراضي على جهاز جديد بلا اتصال.
+  # Tajawal بترخيص SIL OFL 1.1 — نصّه في assets/fonts/OFL.txt
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700

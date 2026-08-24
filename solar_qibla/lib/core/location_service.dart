@@ -214,11 +214,21 @@ class LocationService {
       });
 
   /// يستعيد آخر موقع محفوظ، أو null إن لم يوجد أو كان تالفًا.
+  ///
+  /// لا يرمي أبدًا: إخفاق التخزين لا يجوز أن يمنع التطبيق من الإقلاع؛
+  /// أسوأ ما يحدث أن يُطلب من المستخدم تحديد موقعه من جديد.
   Future<SiteLocation?> loadCached() async {
-    final String? stored = await _control.invokeMethod<String>(
-      'readString',
-      <String, dynamic>{'key': _storageKey},
-    );
+    final String? stored;
+    try {
+      stored = await _control.invokeMethod<String>(
+        'readString',
+        <String, dynamic>{'key': _storageKey},
+      );
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
     if (stored == null || stored.isEmpty) return null;
     try {
       final Object? decoded = jsonDecode(stored);
