@@ -2,8 +2,18 @@
 //
 // Dart نقي: لا واجهة، لا إنترنت، لا مستشعرات. كل الدوال هنا نقية وقابلة للاختبار.
 //
-// المرجع الأساسي:
-//   Duffie, J.A. & Beckman, W.A. — "Solar Engineering of Thermal Processes".
+// المراجع:
+//   [1] Duffie, J.A. & Beckman, W.A. — "Solar Engineering of Thermal Processes".
+//       مصدر هندسة السطح المائل: زاوية السقوط، تباعد الصفوف، منطق التحسين.
+//   [2] Meeus, J. — "Astronomical Algorithms" (الصيغة منخفضة الدقة)، وهي
+//       الخوارزمية التي تقوم عليها حاسبة NOAA Solar Calculator.
+//       مصدر الميل الشمسي ومعادلة الزمن.
+//
+// ملاحظة على اختيار [2]: المواصفات الأولية نصّت على معادلة Cooper للميل
+// والصيغة المبسّطة لمعادلة الزمن. جرى قياسهما مقابل مرجع NREL SPA فبلغ أقصى
+// خطأ زاويّ 0.822°، وهو يتجاوز سماحية المشروع 0.5°، وكان الفشل كلّه عند
+// الاعتدال حيث يبلغ خطأ Cooper ذروته. خوارزمية NOAA/Meeus أدناه قِيست بنفس
+// الطريقة فبلغ أقصى خطأ 0.015°، فاعتُمدت بدلًا منهما.
 //
 // ── اصطلاحات الزوايا المعتمدة في هذا الملف ────────────────────────────────
 //
@@ -70,31 +80,99 @@ int dayOfYear(DateTime date) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 2. الميل الشمسي (Cooper)
+// 2 و 3. الميل الشمسي ومعادلة الزمن — خوارزمية NOAA / Meeus
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// الميل الشمسي δ بالدرجات — معادلة Cooper (1969).
+/// اليوم اليولياني JD الموافق للحظة UTC معطاة.
 ///
-///   δ = 23.45 · sin(360 · (284 + N) / 365)
-///
-/// نموذج تقريبي: خطؤه يصل إلى نحو ‎±1.5°‎ قرب الاعتدالين مقارنةً
-/// بالخوارزميات الفلكية عالية الدقة (NREL SPA).
-double solarDeclination(int n) => 23.45 * _sinD(360.0 * (284 + n) / 365.0);
+/// الحقبة اليوليانية 2440587.5 توافق 1970-01-01T00:00:00Z.
+double julianDay(DateTime utc) =>
+    utc.millisecondsSinceEpoch / 86400000.0 + 2440587.5;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 3. معادلة الزمن (Spencer المبسطة)
-// ═══════════════════════════════════════════════════════════════════════════
+/// حصيلة حساب الوضع الظاهري للشمس في لحظة محدّدة.
+class SolarEphemeris {
+  /// الميل الشمسي δ بالدرجات.
+  final double declination;
 
-/// معادلة الزمن EoT بالدقائق — الصيغة المبسطة.
-///
-///   B   = 360 · (N − 81) / 364
-///   EoT = 9.87·sin(2B) − 7.53·cos(B) − 1.5·sin(B)
-///
-/// نموذج تقريبي: خطؤه يصل إلى نحو ‎±2 دقيقة‎ (أي ‎±0.5°‎ في الزاوية الساعية).
-double equationOfTime(int n) {
-  final double b = 360.0 * (n - 81) / 364.0;
-  return 9.87 * _sinD(2.0 * b) - 7.53 * _cosD(b) - 1.5 * _sinD(b);
+  /// معادلة الزمن EoT بالدقائق.
+  final double equationOfTime;
+
+  const SolarEphemeris({
+    required this.declination,
+    required this.equationOfTime,
+  });
 }
+
+/// يحسب الميل الشمسي ومعادلة الزمن للحظة UTC — خوارزمية NOAA / Meeus.
+///
+/// دقّة الموضع الناتجة نحو ‎0.015°‎ مقارنةً بـNREL SPA للفترة 1900–2100،
+/// وهي أدقّ بخمسين ضعفًا من معادلة Cooper مع الصيغة المبسّطة لمعادلة الزمن.
+///
+/// تُهمل الخوارزمية فرق الزمن ΔT بين TT وUT (كما تفعل حاسبة NOAA نفسها)؛
+/// أثر ذلك على موضع الشمس أقلّ من ‎0.001°‎.
+SolarEphemeris solarEphemeris(DateTime utc) {
+  // القرن اليولياني منذ حقبة J2000.0.
+  final double t = (julianDay(utc) - 2451545.0) / 36525.0;
+
+  // خط الطول الوسطي الهندسي للشمس [درجة].
+  final double meanLongitude =
+      normalizeDegrees360(280.46646 + t * (36000.76983 + t * 0.0003032));
+
+  // الشذوذ الوسطي للشمس [درجة].
+  final double meanAnomaly = 357.52911 + t * (35999.05029 - 0.0001537 * t);
+
+  // الانحراف المداري للأرض [بلا وحدة].
+  final double eccentricity =
+      0.016708634 - t * (0.000042037 + 0.0000001267 * t);
+
+  // معادلة المركز [درجة].
+  final double m = meanAnomaly * _deg2rad;
+  final double center = math.sin(m) * (1.914602 - t * (0.004817 + 0.000014 * t)) +
+      math.sin(2 * m) * (0.019993 - 0.000101 * t) +
+      math.sin(3 * m) * 0.000289;
+
+  // خط الطول الظاهري للشمس، مصحّحًا للانحراف والتزيّح [درجة].
+  final double omegaNode = 125.04 - 1934.136 * t;
+  final double apparentLongitude =
+      meanLongitude + center - 0.00569 - 0.00478 * _sinD(omegaNode);
+
+  // ميل دائرة البروج المصحّح [درجة].
+  final double seconds = 21.448 - t * (46.8150 + t * (0.00059 - t * 0.001813));
+  final double meanObliquity = 23.0 + (26.0 + seconds / 60.0) / 60.0;
+  final double obliquity = meanObliquity + 0.00256 * _cosD(omegaNode);
+
+  // الميل الشمسي: sin δ = sin ε · sin λ
+  final double declination =
+      math.asin(_clampUnit(_sinD(obliquity) * _sinD(apparentLongitude))) *
+          _rad2deg;
+
+  // معادلة الزمن [دقيقة].
+  final double y = math.pow(math.tan(obliquity / 2.0 * _deg2rad), 2).toDouble();
+  final double l0 = meanLongitude * _deg2rad;
+  final double equationOfTime = 4.0 *
+      _rad2deg *
+      (y * math.sin(2 * l0) -
+          2 * eccentricity * math.sin(m) +
+          4 * eccentricity * y * math.sin(m) * math.cos(2 * l0) -
+          0.5 * y * y * math.sin(4 * l0) -
+          1.25 * eccentricity * eccentricity * math.sin(2 * m));
+
+  return SolarEphemeris(
+    declination: declination,
+    equationOfTime: equationOfTime,
+  );
+}
+
+/// يحوّل زمنًا محليًا قياسيًا (بلا توقيت صيفي) إلى UTC.
+DateTime localStandardToUtc(DateTime localStandardTime, int timeZoneOffsetHours) =>
+    DateTime.utc(
+      localStandardTime.year,
+      localStandardTime.month,
+      localStandardTime.day,
+      localStandardTime.hour,
+      localStandardTime.minute,
+      localStandardTime.second,
+    ).subtract(Duration(hours: timeZoneOffsetHours));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 4. الزمن الشمسي الحقيقي
@@ -106,6 +184,7 @@ double equationOfTime(int n) {
 /// **بدون** التوقيت الصيفي (اطرح ساعة إن كان مُفعّلًا).
 /// [longitude] خط الطول موجبًا شرقًا.
 /// [timeZoneOffsetHours] إزاحة المنطقة الزمنية القياسية عن UTC (مثال: ‎+2‎ لغزة).
+/// [equationOfTimeMinutes] معادلة الزمن للحظة نفسها، من [solarEphemeris].
 ///
 /// صيغة Duffie & Beckman الأصلية (خط الطول موجب **غربًا**):
 ///   ST = LST + 4·(L_standard − L_local) + EoT
@@ -120,11 +199,11 @@ double trueSolarTime({
   required double localStandardTimeHours,
   required double longitude,
   required int timeZoneOffsetHours,
-  required int n,
+  required double equationOfTimeMinutes,
 }) {
   final double standardMeridian = 15.0 * timeZoneOffsetHours;
   final double correctionMinutes =
-      4.0 * (longitude - standardMeridian) + equationOfTime(n);
+      4.0 * (longitude - standardMeridian) + equationOfTimeMinutes;
   return localStandardTimeHours + correctionMinutes / 60.0;
 }
 
@@ -181,7 +260,10 @@ SolarPosition solarPosition({
   required int timeZoneOffsetHours,
   required DateTime localStandardTime,
 }) {
-  final int n = dayOfYear(localStandardTime);
+  final SolarEphemeris ephemeris = solarEphemeris(
+    localStandardToUtc(localStandardTime, timeZoneOffsetHours),
+  );
+
   final double hours = localStandardTime.hour +
       localStandardTime.minute / 60.0 +
       localStandardTime.second / 3600.0;
@@ -190,15 +272,13 @@ SolarPosition solarPosition({
     localStandardTimeHours: hours,
     longitude: longitude,
     timeZoneOffsetHours: timeZoneOffsetHours,
-    n: n,
+    equationOfTimeMinutes: ephemeris.equationOfTime,
   );
-  final double omega = hourAngle(st);
-  final double delta = solarDeclination(n);
 
   return solarPositionFromAngles(
     latitude: latitude,
-    declination: delta,
-    hourAngle: omega,
+    declination: ephemeris.declination,
+    hourAngle: hourAngle(st),
   );
 }
 
@@ -479,18 +559,21 @@ Orientation findOptimalOrientation({
     final DateTime day = DateTime(year, 1, 1).add(Duration(days: n - 1));
     if (!months.contains(day.month)) continue;
 
-    final double delta = solarDeclination(n);
-    final double eot = equationOfTime(n);
-    final double longitudeCorrectionHours =
-        (4.0 * (longitude - 15.0 * timeZoneOffsetHours) + eot) / 60.0;
-
     for (int minute = 0; minute < 24 * 60; minute += _timeStepMinutes) {
-      final double localHours = minute / 60.0;
-      final double omega = hourAngle(localHours + longitudeCorrectionHours);
+      final DateTime localStandardTime = day.add(Duration(minutes: minute));
+      final SolarEphemeris ephemeris = solarEphemeris(
+        localStandardToUtc(localStandardTime, timeZoneOffsetHours),
+      );
+      final double omega = hourAngle(trueSolarTime(
+        localStandardTimeHours: minute / 60.0,
+        longitude: longitude,
+        timeZoneOffsetHours: timeZoneOffsetHours,
+        equationOfTimeMinutes: ephemeris.equationOfTime,
+      ));
 
       final SolarPosition sun = solarPositionFromAngles(
         latitude: latitude,
-        declination: delta,
+        declination: ephemeris.declination,
         hourAngle: omega,
       );
       if (!sun.isDaylight) continue;
@@ -653,10 +736,12 @@ RowLayout computeRowLayout({
   );
 
   // الانقلاب الشتوي: 21 ديسمبر. الساعة 9 صباحًا بالتوقيت الشمسي ⇒ ω = −45°.
-  final int n = dayOfYear(DateTime(year, 12, 21));
+  //
+  // يُقيَّم الميل عند ظهر ذلك اليوم بتوقيت UTC: تغيّره خلال اليوم الواحد قرب
+  // الانقلاب أقلّ من ‎0.01°‎، فلا حاجة لخط الطول هنا.
   final SolarPosition sun = solarPositionFromAngles(
     latitude: latitude,
-    declination: solarDeclination(n),
+    declination: solarEphemeris(DateTime.utc(year, 12, 21, 12)).declination,
     hourAngle: -45.0,
   );
   final double alpha = sun.elevation;

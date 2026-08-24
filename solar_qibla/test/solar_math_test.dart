@@ -243,6 +243,63 @@ void main() {
   });
 
   // ═════════════════════════════════════════════════════════════════════════
+  group('اليوم اليولياني والوضع الظاهري للشمس', () {
+    test('اليوم اليولياني عند حقبتين معلومتين', () {
+      // 1970-01-01T00:00:00Z هو JD 2440587.5 بالتعريف.
+      expect(julianDay(DateTime.utc(1970, 1, 1)), closeTo(2440587.5, 1e-9));
+      // حقبة J2000.0 = 2000-01-01T12:00:00Z هي JD 2451545.0.
+      expect(julianDay(DateTime.utc(2000, 1, 1, 12)), closeTo(2451545.0, 1e-9));
+    });
+
+    test('التحويل من الزمن المحلي القياسي إلى UTC', () {
+      expect(
+        localStandardToUtc(DateTime(2026, 3, 21, 12), 2),
+        DateTime.utc(2026, 3, 21, 10),
+      );
+      // يجب أن يعبر منتصف الليل بشكل صحيح.
+      expect(
+        localStandardToUtc(DateTime(2026, 1, 1, 1), 3),
+        DateTime.utc(2025, 12, 31, 22),
+      );
+    });
+
+    test('الميل الشمسي يبلغ حدّيه عند الانقلابين ويكاد ينعدم عند الاعتدالين',
+        () {
+      final double june = solarEphemeris(DateTime.utc(2026, 6, 21, 12)).declination;
+      final double december =
+          solarEphemeris(DateTime.utc(2026, 12, 21, 12)).declination;
+      final double march =
+          solarEphemeris(DateTime.utc(2026, 3, 20, 12)).declination;
+
+      expect(june, closeTo(23.44, 0.05));
+      expect(december, closeTo(-23.44, 0.05));
+      expect(march.abs(), lessThan(0.5));
+      // لا يتجاوز الميل ميل دائرة البروج مطلقًا.
+      for (int day = 0; day < 365; day++) {
+        final double d = solarEphemeris(
+                DateTime.utc(2026, 1, 1, 12).add(Duration(days: day)))
+            .declination;
+        expect(d.abs(), lessThanOrEqualTo(23.45));
+      }
+    });
+
+    test('معادلة الزمن تبقى ضمن مداها الفلكي المعروف ‎±17‎ دقيقة', () {
+      double minimum = 99.0;
+      double maximum = -99.0;
+      for (int day = 0; day < 365; day++) {
+        final double e = solarEphemeris(
+                DateTime.utc(2026, 1, 1, 12).add(Duration(days: day)))
+            .equationOfTime;
+        if (e < minimum) minimum = e;
+        if (e > maximum) maximum = e;
+      }
+      // القمّتان المعروفتان: نحو ‎−14.2‎ دقيقة في فبراير و‎+16.4‎ في نوفمبر.
+      expect(minimum, closeTo(-14.2, 0.5));
+      expect(maximum, closeTo(16.4, 0.5));
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════════
   group('زاوية السقوط', () {
     test('الصيغتان (المثلثية والمتجهية) متطابقتان ضمن 1e-9', () {
       double worst = 0.0;
