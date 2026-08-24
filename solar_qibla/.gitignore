@@ -6,3 +6,4 @@ build/
 # ملفات بيئات التطوير
 .idea/
 *.iml
+.flutter-plugins-dependencies

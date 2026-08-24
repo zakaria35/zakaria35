@@ -1,4 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- الموقع الجغرافي: لازم لحساب موضع الشمس والانحراف المغناطيسي.
+         التطبيق يعمل كاملًا بدونه عبر الإدخال اليدوي لخط العرض والطول. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- مستشعرات التوجيه. required=false كي لا يُستبعد التطبيق من متجر
+         التطبيقات على أجهزة تفتقر إلى البوصلة؛ يُتحقّق من توفّرها تشغيليًا. -->
+    <uses-feature
+        android:name="android.hardware.sensor.compass"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="false" />
+
     <application
         android:label="قِبلة الشمس"
         android:name="${applicationName}"
