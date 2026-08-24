@@ -261,6 +261,27 @@ class _CompassPainter extends CustomPainter {
 // 2. ميزان الميل
 // ═══════════════════════════════════════════════════════════════════════════
 
+/// نصف مدى مسطرة الميل حول الهدف [درجة].
+const double kTiltGaugeSpan = 25.0;
+
+/// يحوّل زاوية ميل إلى كسر موضعي على المسطرة، في المدى ‎[0, 1]‎.
+///
+/// 0 هو الطرف الأيسر من المسطرة و1 الطرف الأيمن، أيًّا كان اتجاه القراءة.
+///
+/// في واجهة من اليمين إلى اليسار يُعكس الاتجاه فتزداد القيم يسارًا، اتساقًا
+/// مع شريط التقدّم الذي يعكسه Flutter تلقائيًا حسب اتجاه النصّ. لولا ذلك
+/// لنما مؤشّران متجاوران في جهتين متعاكستين على الشاشة نفسها.
+double tiltGaugeFraction({
+  required double tilt,
+  required double targetTilt,
+  required bool isRightToLeft,
+  double span = kTiltGaugeSpan,
+}) {
+  final double fraction =
+      ((tilt - targetTilt) / (2 * span) + 0.5).clamp(0.0, 1.0);
+  return isRightToLeft ? 1.0 - fraction : fraction;
+}
+
 /// ميزان فقاعي رقمي: يعرض الميل الحالي والهدف على مسطرة أفقية.
 class TiltGauge extends StatelessWidget {
   const TiltGauge({
@@ -331,6 +352,8 @@ class TiltGauge extends StatelessWidget {
               currentTilt: currentTilt,
               targetTilt: targetTilt,
               color: bandColor(band),
+              isRightToLeft:
+                  Directionality.of(context) == TextDirection.rtl,
             ),
           ),
         ),
@@ -344,14 +367,13 @@ class _TiltPainter extends CustomPainter {
     required this.currentTilt,
     required this.targetTilt,
     required this.color,
+    required this.isRightToLeft,
   });
 
   final double currentTilt;
   final double targetTilt;
   final Color color;
-
-  /// نصف مدى المسطرة حول الهدف [درجة].
-  static const double _span = 25.0;
+  final bool isRightToLeft;
 
   static const Color _ink = Color(0xFF111111);
 
@@ -369,19 +391,24 @@ class _TiltPainter extends CustomPainter {
     );
 
     /// موضع أفقي لزاوية معطاة.
-    double xFor(double tilt) {
-      final double fraction =
-          ((tilt - targetTilt) / (2 * _span) + 0.5).clamp(0.0, 1.0);
-      return fraction * size.width;
-    }
+    double xFor(double tilt) =>
+        tiltGaugeFraction(
+          tilt: tilt,
+          targetTilt: targetTilt,
+          isRightToLeft: isRightToLeft,
+        ) *
+        size.width;
 
-    // نطاق المطابقة الأخضر حول الهدف.
+    // نطاق المطابقة الأخضر حول الهدف. الحدّان يتبادلان موضعيهما عند العكس،
+    // فيُرتَّبان بأصغرَ وأكبر لا بافتراض أيّهما اليسار.
+    final double bandA = xFor(targetTilt - kOnTargetThreshold);
+    final double bandB = xFor(targetTilt + kOnTargetThreshold);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTRB(
-          xFor(targetTilt - kOnTargetThreshold),
+          math.min(bandA, bandB),
           midY - 9,
-          xFor(targetTilt + kOnTargetThreshold),
+          math.max(bandA, bandB),
           midY + 9,
         ),
         const Radius.circular(9),
@@ -419,7 +446,8 @@ class _TiltPainter extends CustomPainter {
   bool shouldRepaint(_TiltPainter old) =>
       old.currentTilt != currentTilt ||
       old.targetTilt != targetTilt ||
-      old.color != color;
+      old.color != color ||
+      old.isRightToLeft != isRightToLeft;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

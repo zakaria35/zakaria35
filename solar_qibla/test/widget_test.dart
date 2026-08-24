@@ -188,6 +188,48 @@ void main() {
     expect(find.text('در 20.0° يسارًا'), findsOneWidget);
   });
 
+  group('مسطرة الميل تحترم اتجاه الواجهة', () {
+    test('الهدف في المنتصف مهما كان الاتجاه', () {
+      for (final bool rtl in <bool>[false, true]) {
+        expect(
+          tiltGaugeFraction(tilt: 30.0, targetTilt: 30.0, isRightToLeft: rtl),
+          closeTo(0.5, 1e-12),
+        );
+      }
+    });
+
+    test('من اليمين إلى اليسار: الميل الأكبر يقع يسارًا', () {
+      // اتساقًا مع شريط التقدّم الذي يعكسه Flutter تلقائيًا في RTL.
+      final double higher =
+          tiltGaugeFraction(tilt: 40.0, targetTilt: 30.0, isRightToLeft: true);
+      final double lower =
+          tiltGaugeFraction(tilt: 20.0, targetTilt: 30.0, isRightToLeft: true);
+      expect(higher, lessThan(0.5));
+      expect(lower, greaterThan(0.5));
+    });
+
+    test('من اليسار إلى اليمين: الاتجاه معكوس', () {
+      final double higher =
+          tiltGaugeFraction(tilt: 40.0, targetTilt: 30.0, isRightToLeft: false);
+      expect(higher, greaterThan(0.5));
+    });
+
+    test('القيم خارج المدى تُحصر في طرفَي المسطرة', () {
+      expect(
+        tiltGaugeFraction(tilt: 300.0, targetTilt: 30.0, isRightToLeft: false),
+        1.0,
+      );
+      expect(
+        tiltGaugeFraction(tilt: -300.0, targetTilt: 30.0, isRightToLeft: false),
+        0.0,
+      );
+      expect(
+        tiltGaugeFraction(tilt: 300.0, targetTilt: 30.0, isRightToLeft: true),
+        0.0,
+      );
+    });
+  });
+
   testWidgets('بلا موقع تُعرض شاشة الإعداد لا المؤشّرات', (tester) async {
     mockChannels(tilt: 30.0, azimuth: 180.0, withLocation: false);
     await pumpApp(tester, await buildState());
