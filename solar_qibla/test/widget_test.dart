@@ -166,6 +166,9 @@ void main() {
 
     expect(find.text('الاتجاه مضبوط'), findsOneWidget);
     expect(find.text('الميل مضبوط'), findsOneWidget);
+    // ثلاث علامات صحّ: تعليمة الاتجاه، تعليمة الميل، وزرّ التثبيت الذي
+    // يتحوّل إلى حالة "الوضع الأمثل".
+    expect(find.byIcon(Icons.check_circle), findsNWidgets(3));
     expect(find.text('الوضع الأمثل — ثبّت القراءة'), findsOneWidget);
   });
 
@@ -177,6 +180,9 @@ void main() {
 
     expect(find.text('ارفع 12.0°'), findsOneWidget);
     expect(find.text('در 20.0° يمينًا'), findsOneWidget);
+    // السهم مطلوب في المواصفات إلى جانب المقدار.
+    expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
+    expect(find.byIcon(Icons.rotate_right), findsOneWidget);
   });
 
   testWidgets('الانحراف في الجهة المقابلة يعكس التعليمة', (tester) async {
@@ -186,6 +192,8 @@ void main() {
 
     expect(find.text('اخفض 12.0°'), findsOneWidget);
     expect(find.text('در 20.0° يسارًا'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+    expect(find.byIcon(Icons.rotate_left), findsOneWidget);
   });
 
   group('مسطرة الميل تحترم اتجاه الواجهة', () {

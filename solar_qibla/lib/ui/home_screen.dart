@@ -181,6 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
           guidance.azimuthDeviation == null
               ? AlignmentBand.far
               : bandForDeviation(guidance.azimuthDeviation!),
+          _turnIcon(guidance),
         ),
 
         const Divider(height: 36, thickness: 1.5),
@@ -195,6 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _instruction(
           guidance.tiltInstruction,
           bandForDeviation(guidance.tiltDeviation),
+          _tiltIcon(guidance),
         ),
 
         const Divider(height: 36, thickness: 1.5),
@@ -268,7 +270,36 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
-  Widget _instruction(String text, AlignmentBand band) => Container(
+  /// سهم جهة إدارة اللوح.
+  ///
+  /// أيقونتا الدوران ليستا اتجاهيتين نصّيًا، فلا يعكسهما اتجاه الواجهة:
+  /// "يمينًا" تبقى دورانًا مع عقارب الساعة بصريًا في العربية كما في غيرها.
+  static IconData _turnIcon(AimingGuidance guidance) {
+    if (guidance.azimuthDeviation == null) return Icons.help_outline;
+    switch (guidance.turnDirection) {
+      case TurnDirection.clockwise:
+        return Icons.rotate_right;
+      case TurnDirection.counterClockwise:
+        return Icons.rotate_left;
+      case TurnDirection.none:
+        return Icons.check_circle;
+    }
+  }
+
+  /// سهم جهة تعديل الميل.
+  static IconData _tiltIcon(AimingGuidance guidance) {
+    switch (guidance.tiltDirection) {
+      case TiltDirection.raise:
+        return Icons.arrow_upward;
+      case TiltDirection.lower:
+        return Icons.arrow_downward;
+      case TiltDirection.none:
+        return Icons.check_circle;
+    }
+  }
+
+  Widget _instruction(String text, AlignmentBand band, IconData icon) =>
+      Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -276,14 +307,26 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: bandColor(band), width: 2),
         ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: bandColor(band),
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(icon, size: 34, color: bandColor(band)),
+            const SizedBox(width: 12),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: bandColor(band),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       );
 
