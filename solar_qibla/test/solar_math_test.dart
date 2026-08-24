@@ -18,10 +18,14 @@
 // حُذفت اللحظات التي تتجاوز فيها زاوية سمت الرأس 85°، لأن الانكسار الجوي
 // وسوء التكييف الرياضي قرب الأفق يجعلان المقارنة الهندسية بلا معنى.
 
+// تستخدم هذه الاختبارات print عمدًا لإخراج تقرير الدقّة الذي تشترطه
+// مواصفات المشروع (عدد الناجح/الفاشل وأقصى خطأ زاوي).
+// ignore_for_file: avoid_print
+
 import 'dart:math' as math;
 
 import 'package:solar_qibla/core/solar_math.dart';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 /// سماحية موضع الشمس المطلوبة في مواصفات المشروع.
 const double kToleranceDegrees = 0.5;
@@ -158,7 +162,7 @@ void main() {
           separation,
           lessThanOrEqualTo(kToleranceDegrees),
           reason: 'الفصل الزاوي ${separation.toStringAsFixed(3)}° يتجاوز '
-              'السماحية ${kToleranceDegrees}°  '
+              'السماحية $kToleranceDegrees°  '
               '(Δθz=${dZenith.toStringAsFixed(3)}°، '
               'Δγs=${dAzimuth.toStringAsFixed(3)}°)',
         );
@@ -174,7 +178,7 @@ void main() {
       print('أقصى خطأ في السمت      : ${maxAzimuthError.toStringAsFixed(3)}°');
       print('أقصى فصل زاوي          : ${maxSeparation.toStringAsFixed(3)}°');
       print('أسوأ حالة              : $worstCase');
-      print('السماحية المطلوبة      : ${kToleranceDegrees}°');
+      print('السماحية المطلوبة      : $kToleranceDegrees°');
       print('═══════════════════════════');
     });
   });
