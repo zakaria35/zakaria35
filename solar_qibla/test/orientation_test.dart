@@ -94,6 +94,29 @@ void main() {
       );
     });
 
+    test('المقروء هو عمود الجهاز لا حافته العليا', () {
+      // اختبار انحدار لخطأ في خطوات المعايرة بالشمس: كانت التعليمات تطلب
+      // تسديد الحافة العليا نحو الشمس، بينما القراءة هي اتجاه العمود على
+      // الجهاز (محور +Z). الحافة العليا (محور +Y) تشير إلى الجهة المقابلة
+      // تمامًا، فكانت الإزاحة المحسوبة تنقلب ‎180°‎.
+      const double tilt = 35.0;
+      const double azimuth = 200.0;
+      final List<double> matrix =
+          rotationMatrixFor(tilt: tilt, azimuth: azimuth);
+
+      final RawOrientation o = orientationFromRotationMatrix(matrix);
+      expect(o.magneticAzimuth, closeTo(azimuth, 1e-9));
+
+      // محور +Y هو العمود الأوسط من المصفوفة: (R[1], R[4], R[7]).
+      final double topEdgeAzimuth = normalizeDegrees360(
+        math.atan2(matrix[1], matrix[4]) * 180.0 / math.pi,
+      );
+      expect(
+        angularDifference(o.magneticAzimuth, topEdgeAzimuth).abs(),
+        closeTo(180.0, 1e-9),
+      );
+    });
+
     test('مصفوفة بطول خاطئ تُرفض', () {
       expect(
         () => orientationFromRotationMatrix(<double>[1, 0, 0, 0, 1, 0]),
