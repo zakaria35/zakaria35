@@ -1,0 +1,386 @@
+{
+  "name": "SC-03 | Publish Guard",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## SC-03 | Publish Guard — أهم Workflow في النظام\n\n`NO APPROVAL = NO PUBLISH`. يجمع الحقائق من 5 تبويبات ويصدر **PASS** أو **BLOCKED**\nمع `block_reasons` صريحة (§35). لا يكتب محتوى، ولا يعدّل caption، ولا يخفف شرطًا.\n\n⚠️ **حالة الإنتاج في التقويم لا تُعتمد كمصدر حقيقة** — المصدر هو لوحة الإنتاج اليومية + سجل الاعتماد.",
+        "height": 240,
+        "width": 700,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -660,
+        -300
+      ],
+      "id": "850cafaf-0000-4000-8000-cd22ce3c7b87",
+      "name": "Note 24"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -660,
+        20
+      ],
+      "id": "0967a46d-0000-4000-8000-c6b5326444af",
+      "name": "01 — Receive Content"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1AsRZO5jZCWlKK1zmCravNEfBDIKnKBzprRI99kFUMk8",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "لوحة الإنتاج اليومية",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -420,
+        20
+      ],
+      "id": "c09132e0-0000-4000-8000-131ae9e8dd85",
+      "name": "02 — Lookup Master Record",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "قراءة فقط. إعادة المحاولة: محاولتان إضافيتان بحد أقصى (§24).",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1AsRZO5jZCWlKK1zmCravNEfBDIKnKBzprRI99kFUMk8",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "سجل الاعتماد",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -220,
+        20
+      ],
+      "id": "7d6d1c85-0000-4000-8000-05a9cb98f1fd",
+      "name": "03 — Lookup Approval Record",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "قراءة فقط. إعادة المحاولة: محاولتان إضافيتان بحد أقصى (§24).",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1AsRZO5jZCWlKK1zmCravNEfBDIKnKBzprRI99kFUMk8",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "حزم النشر",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -20,
+        20
+      ],
+      "id": "6ce2fa12-0000-4000-8000-36284756c742",
+      "name": "04 — Lookup Publish Package",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "إن لم يوجد تبويب «حزم النشر» بعد، تُعامل النتيجة كحزمة مفقودة -> BLOCKED، ولا يتوقف السير.",
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1AsRZO5jZCWlKK1zmCravNEfBDIKnKBzprRI99kFUMk8",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "سجل النشر",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        180,
+        20
+      ],
+      "id": "a2ec4246-0000-4000-8000-86c31ab6c37a",
+      "name": "05 — Lookup Publish Log",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "قراءة فقط. إعادة المحاولة: محاولتان إضافيتان بحد أقصى (§24).",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "/* ===== مُحقَن آليًا من workflows/content-factory/lib — لا تحرّره هنا ===== */\n\n/* المصدر: lib/core.js + lib/steps.js | المولّد: build/build.js            */\n\n/*\n * Shaghaf Content Factory — Automation Core\n * ------------------------------------------------------------------\n * المصدر الوحيد لمنطق: التوقيت، تطبيع الصفوف، Event Key، وPublish Guard.\n * هذا الملف يُحقن حرفيًا داخل عقد Code في n8n بواسطة build/build.js،\n * ونفس الملف تختبره tests/run-tests.js — فلا يمكن أن يفترق المُختبَر عن المُشغَّل.\n *\n * قاعدة حاكمة: هذا الكود منفّذ لا مُقرِّر. لا يكتب محتوى علميًا، ولا يعيد صياغة\n * caption، ولا يخفف أي شرط اعتماد. كل ما يفعله: يقرأ الحقائق ويصدر PASS/BLOCKED.\n */\n\nvar SC_TIMEZONE_DEFAULT = 'Asia/Jerusalem';\n\n/* ==================================================================\n * 1) التوقيت — Asia/Jerusalem صراحةً\n * ================================================================== */\n\n/** إزاحة المنطقة الزمنية بالدقائق عند لحظة UTC معيّنة (تراعي التوقيت الصيفي). */\nfunction tzOffsetMinutes(utcDate, tz) {\n  var dtf = new Intl.DateTimeFormat('en-US', {\n    timeZone: tz,\n    hour12: false,\n    year: 'numeric', month: '2-digit', day: '2-digit',\n    hour: '2-digit', minute: '2-digit', second: '2-digit'\n  });\n  var parts = {};\n  var list = dtf.formatToParts(utcDate);\n  for (var i = 0; i < list.length; i++) parts[list[i].type] = list[i].value;\n  var hour = parts.hour === '24' ? '00' : parts.hour;\n  var asUTC = Date.UTC(\n    Number(parts.year), Number(parts.month) - 1, Number(parts.day),\n    Number(hour), Number(parts.minute), Number(parts.second)\n  );\n  return (asUTC - utcDate.getTime()) / 60000;\n}\n\n/**\n * يحوّل تاريخًا/وقتًا \"محليًا في tz\" إلى لحظة UTC حقيقية.\n * 2026-09-02 20:00 + Asia/Jerusalem  ->  2026-09-02T17:00:00Z\n * التمريرة الثانية تصحّح الحالة الحدّية عند تبديل التوقيت الصيفي.\n */\nfunction zonedToUtc(y, mo, d, hh, mm, tz) {\n  var naive = Date.UTC(y, mo - 1, d, hh, mm, 0, 0);\n  var off = tzOffsetMinutes(new Date(naive), tz);\n  var ts = naive - off * 60000;\n  off = tzOffsetMinutes(new Date(ts), tz);\n  ts = naive - off * 60000;\n  return new Date(ts);\n}\n\nfunction pad2(n) { return (n < 10 ? '0' : '') + n; }\n\n/** ISO-8601 بإزاحة المنطقة الظاهرة: 2026-09-02T20:00:00+03:00 */\nfunction formatIsoWithOffset(utcDate, tz) {\n  var off = tzOffsetMinutes(utcDate, tz);\n  var local = new Date(utcDate.getTime() + off * 60000);\n  var sign = off >= 0 ? '+' : '-';\n  var abs = Math.abs(off);\n  return local.getUTCFullYear() + '-' + pad2(local.getUTCMonth() + 1) + '-' + pad2(local.getUTCDate()) +\n    'T' + pad2(local.getUTCHours()) + ':' + pad2(local.getUTCMinutes()) + ':' + pad2(local.getUTCSeconds()) +\n    sign + pad2(Math.floor(abs / 60)) + ':' + pad2(abs % 60);\n}\n\n/** يقرأ خانة تاريخ من Sheets: نص ISO، أو d/m/Y، أو كائن Date. */\nfunction parseSheetDate(value) {\n  if (value === null || value === undefined || value === '') return null;\n  if (value instanceof Date && !isNaN(value.getTime())) {\n    return { y: value.getUTCFullYear(), mo: value.getUTCMonth() + 1, d: value.getUTCDate() };\n  }\n  var s = String(value).trim();\n  var m = s.match(/^(\\d{4})[-/](\\d{1,2})[-/](\\d{1,2})/);\n  if (m) return { y: Number(m[1]), mo: Number(m[2]), d: Number(m[3]) };\n  m = s.match(/^(\\d{1,2})[-/](\\d{1,2})[-/](\\d{4})/);\n  if (m) return { y: Number(m[3]), mo: Number(m[2]), d: Number(m[1]) };\n  return null;\n}\n\n/** يقرأ خانة وقت من Sheets: \"20:00\"، \"20:00:00\"، كائن Date، أو كسر تسلسلي. */\nfunction parseSheetTime(value) {\n  if (value === null || value === undefined || value === '') return null;\n  if (value instanceof Date && !isNaN(value.getTime())) {\n    return { hh: value.getUTCHours(), mm: value.getUTCMinutes() };\n  }\n  if (typeof value === 'number' && isFinite(value)) {\n    var frac = value - Math.floor(value);\n    var mins = Math.round(frac * 24 * 60);\n    return { hh: Math.floor(mins / 60) % 24, mm: mins % 60 };\n  }\n  var s = String(value).trim();\n  var m = s.match(/(\\d{1,2}):(\\d{2})/);\n  if (!m) return null;\n  var hh = Number(m[1]);\n  var mm = Number(m[2]);\n  if (/pm/i.test(s) && hh < 12) hh += 12;\n  if (/am/i.test(s) && hh === 12) hh = 0;\n  if (hh > 23 || mm > 59) return null;\n  return { hh: hh, mm: mm };\n}\n\n/** يبني scheduled_at من (التاريخ + الوقت) مفسَّرين صراحةً في tz. */\nfunction buildScheduledAt(dateValue, timeValue, tz) {\n  var d = parseSheetDate(dateValue);\n  var t = parseSheetTime(timeValue);\n  if (!d || !t) return null;\n  var utc = zonedToUtc(d.y, d.mo, d.d, t.hh, t.mm, tz);\n  return { utc: utc, iso: formatIsoWithOffset(utc, tz) };\n}\n\n/* ==================================================================\n * 2) قراءة الأعمدة بالاسم لا بالرقم\n * ================================================================== */\n\n/** توحيد اسم العمود: مسافات، تطويل، محارف اتجاهية، أشكال يونيكود. */\nfunction normHeader(name) {\n  return String(name === null || name === undefined ? '' : name)\n    .normalize('NFKC')\n    .replace(/[ـ‎‏‪-‮⁦-⁩]/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim()\n    .toLowerCase();\n}\n\n/** يجلب قيمة عمود من صف عبر اسمه أو أي اسم بديل. لا يعتمد على ترتيب الأعمدة. */\nfunction field(row, names) {\n  if (!row) return '';\n  var wanted = Array.isArray(names) ? names : [names];\n  var index = {};\n  var keys = Object.keys(row);\n  for (var i = 0; i < keys.length; i++) index[normHeader(keys[i])] = row[keys[i]];\n  for (var j = 0; j < wanted.length; j++) {\n    var k = normHeader(wanted[j]);\n    if (Object.prototype.hasOwnProperty.call(index, k)) {\n      var v = index[k];\n      return v === null || v === undefined ? '' : v;\n    }\n  }\n  return '';\n}\n\n/** نص مُشذّب للمقارنة الحرفية. */\nfunction text(value) {\n  return String(value === null || value === undefined ? '' : value)\n    .normalize('NFKC')\n    .replace(/[ـ‎‏‪-‮⁦-⁩]/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction upper(value) { return text(value).toUpperCase(); }\n\n/** بحث عن صف بالـID داخل مصفوفة صفوف. */\nfunction findById(rows, id, idNames) {\n  var target = text(id);\n  if (!target) return null;\n  var names = idNames || ['ID'];\n  for (var i = 0; i < (rows || []).length; i++) {\n    if (text(field(rows[i], names)) === target) return rows[i];\n  }\n  return null;\n}\n\n/* ==================================================================\n * 3) Event Key — منع التكرار\n * ================================================================== */\n\n/** content_id | scheduled_at | channel | post_type */\nfunction buildEventKey(contentId, scheduledAtIso, channel, postType) {\n  return [text(contentId), text(scheduledAtIso), text(channel), text(postType)].join('|');\n}\n\n/* ==================================================================\n * 4) تطبيع صف التقويم -> مرشّح\n * ================================================================== */\n\nvar CAL = {\n  id: ['ID'],\n  date: ['التاريخ'],\n  time: ['الوقت'],\n  topic: ['الموضوع'],\n  postType: ['نوع المنشور'],\n  channel: ['القناة'],\n  prodStatus: ['حالة الإنتاج'],\n  sciStatus: ['الحالة العلمية'],\n  cta: ['CTA']\n};\n\nfunction normalizeCalendarRow(row, tz) {\n  var id = text(field(row, CAL.id));\n  var built = buildScheduledAt(field(row, CAL.date), field(row, CAL.time), tz);\n  var channel = text(field(row, CAL.channel));\n  var postType = text(field(row, CAL.postType));\n  return {\n    content_id: id,\n    topic: text(field(row, CAL.topic)),\n    platform: channel,\n    channel: channel,\n    post_type: postType,\n    format: postType,\n    cta: text(field(row, CAL.cta)),\n    calendar_status: text(field(row, CAL.prodStatus)),\n    calendar_science_status: text(field(row, CAL.sciStatus)),\n    scheduled_at: built ? built.iso : '',\n    scheduled_at_ms: built ? built.utc.getTime() : null,\n    event_key: built ? buildEventKey(id, built.iso, channel, postType) : ''\n  };\n}\n\n/* ==================================================================\n * 5) نافذة الاستحقاق\n * ================================================================== */\n\n/**\n * DUE            : now - LOOKBACK_HOURS <= scheduled_at <= now + LEAD_MINUTES\n * MISSED_WINDOW  : scheduled_at أقدم من نافذة الاسترجاع ولم يُنشر  -> تنبيه فقط، بلا طابور\n * NOT_DUE        : لم يحن بعد\n * INVALID_SCHEDULE : تعذّر بناء scheduled_at\n */\nfunction classifyWindow(candidate, nowMs, leadMinutes, lookbackHours) {\n  if (candidate.scheduled_at_ms === null) return 'INVALID_SCHEDULE';\n  var upperBound = nowMs + leadMinutes * 60000;\n  var lowerBound = nowMs - lookbackHours * 3600000;\n  if (candidate.scheduled_at_ms > upperBound) return 'NOT_DUE';\n  if (candidate.scheduled_at_ms < lowerBound) return 'MISSED_WINDOW';\n  return 'DUE';\n}\n\n/* ==================================================================\n * 6) تطبيع بيانات Publish Guard\n * ================================================================== */\n\nvar MASTER = {\n  id: ['ID'],\n  science: ['حالة التدقيق العلمي'],\n  production: ['حالة الإنتاج'],\n  approvedAsset: ['رابط الملف المعتمد'],\n  v2: ['نسخة V2'],\n  topic: ['الموضوع']\n};\n\nvar APPROVAL = {\n  id: ['ID'],\n  science: ['QA علمي'],\n  language: ['QA لغوي'],\n  pedagogy: ['QA تربوي'],\n  visual: ['QA بصري'],\n  status: ['حالة الاعتماد'],\n  reason: ['سبب الرفض/المراجعة', 'سبب الرفض / المراجعة']\n};\n\nvar PACKAGE = {\n  id: ['ID'],\n  version: ['Version'],\n  status: ['Status'],\n  caption: ['Caption'],\n  altText: ['Alt Text'],\n  pinned: ['Pinned Comment'],\n  storyBefore: ['Story Before'],\n  storyAfter: ['Story After'],\n  hashtags: ['Hashtags']\n};\n\nvar PUBLOG = {\n  id: ['ID'],\n  platform: ['المنصة'],\n  format: ['صيغة النشر'],\n  date: ['تاريخ النشر'],\n  url: ['رابط المنشور'],\n  status: ['حالة النشر']\n};\n\n/** هل السجل في سجل النشر يعني \"منشور فعلًا\"؟ */\nfunction isPublishedState(value) {\n  var v = upper(value);\n  return v.indexOf('PUBLISHED') !== -1 || text(value).indexOf('منشور') !== -1;\n}\n\n/**\n * يبني الكائن الموحّد الذي يستهلكه Publish Guard.\n * masterRow / approvalRow / packageRow قد تكون null — الحارس يتعامل مع ذلك.\n */\nfunction buildNormalized(candidate, masterRow, approvalRow, packageRow, publishLogRows) {\n  var alreadyPublished = false;\n  var rows = publishLogRows || [];\n  for (var i = 0; i < rows.length; i++) {\n    if (text(field(rows[i], PUBLOG.id)) === text(candidate.content_id) &&\n        isPublishedState(field(rows[i], PUBLOG.status))) {\n      alreadyPublished = true;\n      break;\n    }\n  }\n\n  return {\n    event_key: candidate.event_key,\n    content_id: candidate.content_id,\n    topic: candidate.topic || text(field(masterRow, MASTER.topic)),\n    platform: candidate.platform,\n    post_type: candidate.post_type,\n    format: candidate.format || candidate.post_type,\n    cta: candidate.cta || '',\n    scheduled_at: candidate.scheduled_at,\n    calendar_status: candidate.calendar_status,\n\n    master_record_found: !!masterRow,\n    science_status: text(field(masterRow, MASTER.science)),\n    production_status: text(field(masterRow, MASTER.production)),\n    approved_asset_url: text(field(masterRow, MASTER.approvedAsset)),\n    v2_version: text(field(masterRow, MASTER.v2)),\n\n    approval_record_found: !!approvalRow,\n    qa_science: text(field(approvalRow, APPROVAL.science)),\n    qa_language: text(field(approvalRow, APPROVAL.language)),\n    qa_pedagogy: text(field(approvalRow, APPROVAL.pedagogy)),\n    qa_visual: text(field(approvalRow, APPROVAL.visual)),\n    approval_status: text(field(approvalRow, APPROVAL.status)),\n    approval_reason: text(field(approvalRow, APPROVAL.reason)),\n\n    package_found: !!packageRow,\n    package_version: text(field(packageRow, PACKAGE.version)),\n    package_status: text(field(packageRow, PACKAGE.status)),\n    caption: String(field(packageRow, PACKAGE.caption) || ''),\n    alt_text: String(field(packageRow, PACKAGE.altText) || ''),\n    pinned_comment: String(field(packageRow, PACKAGE.pinned) || ''),\n    story_before: String(field(packageRow, PACKAGE.storyBefore) || ''),\n    story_after: String(field(packageRow, PACKAGE.storyAfter) || ''),\n    hashtags: String(field(packageRow, PACKAGE.hashtags) || ''),\n\n    already_published: alreadyPublished\n  };\n}\n\n/* ==================================================================\n * 7) Publish Guard — القرار\n * ================================================================== */\n\nvar SCIENCE_APPROVED_LITERAL = 'مدققة علميًا وجاهزة للإنتاج';\n\n/** قيم تنقض أي ادعاء اعتماد حتى لو ظهرت كلمة APPROVED في النص. */\nvar NEGATING_TOKENS = ['NEEDS REVIEW', 'PENDING', 'DRAFT', 'BLOCKED', 'REJECT', 'HOLD', 'REQUIRES', 'AWAITING'];\n\nfunction hasNegatingToken(value) {\n  var v = upper(value);\n  for (var i = 0; i < NEGATING_TOKENS.length; i++) {\n    if (v.indexOf(NEGATING_TOKENS[i]) !== -1) return true;\n  }\n  return false;\n}\n\n/**\n * لا يمر شيء إلا باستيفاء كل الشروط. الترتيب مقصود: أسباب الحظر تُجمع كلها\n * ولا نتوقف عند أول سبب — لأن §35 يطلب صورة كاملة لسبب الحظر.\n */\nfunction runPublishGuard(d) {\n  var reasons = [];\n\n  if (!d.master_record_found) reasons.push('MASTER_RECORD_MISSING');\n  if (!d.approval_record_found) reasons.push('APPROVAL_RECORD_MISSING');\n\n  if (text(d.science_status) !== SCIENCE_APPROVED_LITERAL) reasons.push('SCIENCE_NOT_APPROVED');\n\n  if (upper(d.qa_science) !== 'PASS') reasons.push('QA_SCIENCE_NOT_PASS');\n  if (upper(d.qa_language) !== 'PASS') reasons.push('QA_LANGUAGE_NOT_PASS');\n  if (upper(d.qa_pedagogy) !== 'PASS') reasons.push('QA_PEDAGOGY_NOT_PASS');\n  if (upper(d.qa_visual) !== 'PASS') reasons.push('QA_VISUAL_NOT_PASS');\n\n  if (upper(d.approval_status) !== 'APPROVED') reasons.push('FINAL_APPROVAL_MISSING');\n\n  // §16.7 — حالة الإنتاج يجب أن تدل بوضوح على APPROVED / READY TO PUBLISH.\n  // تشديد مقصود: \"APPROVED — PENDING FIX\" لا يُعتبر اعتمادًا.\n  if (!d.production_status || upper(d.production_status).indexOf('APPROVED') === -1) {\n    reasons.push('PRODUCTION_NOT_APPROVED');\n  } else if (hasNegatingToken(d.production_status)) {\n    reasons.push('PRODUCTION_APPROVAL_CONDITIONAL');\n  }\n\n  if (!text(d.approved_asset_url)) reasons.push('APPROVED_ASSET_MISSING');\n\n  if (!text(d.v2_version)) reasons.push('V2_VERSION_MISSING');\n  else if (hasNegatingToken(d.v2_version)) reasons.push('V2_VERSION_PENDING');\n\n  if (!d.package_found) reasons.push('PUBLISH_PACKAGE_NOT_FOUND');\n  if (upper(d.package_status) !== 'APPROVED') reasons.push('PUBLISH_PACKAGE_NOT_APPROVED');\n\n  if (!text(d.caption)) reasons.push('CAPTION_MISSING');\n\n  if (d.already_published === true) reasons.push('ALREADY_PUBLISHED');\n\n  var unique = [];\n  for (var i = 0; i < reasons.length; i++) {\n    if (unique.indexOf(reasons[i]) === -1) unique.push(reasons[i]);\n  }\n\n  return {\n    guard_status: unique.length === 0 ? 'PASS' : 'BLOCKED',\n    block_reasons: unique\n  };\n}\n\n/* ==================================================================\n * 8) تصنيف أحداث SC-05 — أي خطأ يستحق إعادة المحاولة؟\n * ================================================================== */\n\n/** أسباب حظر ناتجة عن قواعد العمل: لا إعادة محاولة إطلاقًا، ننتظر تعديل البيانات. */\nvar BUSINESS_BLOCK_REASONS = [\n  'MASTER_RECORD_MISSING', 'APPROVAL_RECORD_MISSING', 'SCIENCE_NOT_APPROVED',\n  'QA_SCIENCE_NOT_PASS', 'QA_LANGUAGE_NOT_PASS', 'QA_PEDAGOGY_NOT_PASS', 'QA_VISUAL_NOT_PASS',\n  'FINAL_APPROVAL_MISSING', 'PRODUCTION_NOT_APPROVED', 'PRODUCTION_APPROVAL_CONDITIONAL',\n  'APPROVED_ASSET_MISSING', 'V2_VERSION_MISSING', 'V2_VERSION_PENDING',\n  'PUBLISH_PACKAGE_NOT_FOUND', 'PUBLISH_PACKAGE_NOT_APPROVED', 'CAPTION_MISSING',\n  'ALREADY_PUBLISHED'\n];\n\nfunction classifyAlertEvent(evt) {\n  var state = upper(evt && evt.state);\n  if (state === 'ERROR') {\n    return { category: 'TECHNICAL_ERROR', retry_allowed: true, max_additional_retries: 2 };\n  }\n  if (state === 'MISSED_WINDOW') {\n    return { category: 'MISSED_WINDOW', retry_allowed: false, max_additional_retries: 0 };\n  }\n  return { category: 'BUSINESS_BLOCK', retry_allowed: false, max_additional_retries: 0 };\n}\n\n/* ================================================================== */\n\n/*\n * Shaghaf Content Factory — Step Logic\n * ------------------------------------------------------------------\n * منطق كل عقدة Code في SC-01 / SC-03 / SC-05 / SC-06، كدوال نقية.\n * يعتمد على lib/core.js. يُحقن حرفيًا داخل n8n، ويُختبر كما هو.\n */\n\n/* eslint-disable no-undef */\nvar _f = field, _t = text, _u = upper, _find = findById;\nvar _norm = normalizeCalendarRow, _class = classifyWindow;\nvar _built = buildNormalized, _guard = runPublishGuard;\nvar _pubst = isPublishedState, _alert = classifyAlertEvent;\n\n/* ==================================================================\n * SC-01 — بناء المرشحين\n * ================================================================== */\n\nvar QUEUE_ACTIVE_STATES = ['READY_FOR_MANUAL_PUBLISH', 'PUBLISHED'];\n\nfunction sc01BuildCandidates(input) {\n  var cfg = input.config;\n  var tz = cfg.TIMEZONE;\n  var nowMs = input.nowMs;\n  var out = [];\n\n  var queueIndex = {};\n  (input.queueRows || []).forEach(function (r) {\n    var k = _t(_f(r, ['Event Key']));\n    if (!k) return;\n    var st = _u(_f(r, ['State']));\n    if (QUEUE_ACTIVE_STATES.indexOf(st) !== -1) queueIndex[k] = st;\n  });\n\n  var publishedIds = {};\n  (input.publishLogRows || []).forEach(function (r) {\n    if (_pubst(_f(r, ['حالة النشر']))) publishedIds[_t(_f(r, ['ID']))] = true;\n  });\n\n  var alertedMissed = {};\n  (input.autoLogRows || []).forEach(function (r) {\n    if (_u(_f(r, ['State'])) === 'MISSED_WINDOW') alertedMissed[_t(_f(r, ['Event Key']))] = true;\n  });\n\n  (input.calendarRows || []).forEach(function (row) {\n    var c = _norm(row, tz);\n    if (!c.content_id) return;\n\n    if (!c.event_key) {\n      out.push(Object.assign({}, c, {\n        route: 'INVALID_SCHEDULE', state: 'ERROR',\n        reason: 'INVALID_SCHEDULE — تعذّر بناء scheduled_at من التاريخ/الوقت'\n      }));\n      return;\n    }\n\n    var win = _class(c, nowMs, cfg.LEAD_MINUTES, cfg.LOOKBACK_HOURS);\n    if (win === 'NOT_DUE') return;\n\n    if (publishedIds[c.content_id]) {\n      out.push(Object.assign({}, c, {\n        route: 'SKIP', state: 'SKIPPED_ALREADY_PUBLISHED',\n        reason: 'العنصر مسجَّل PUBLISHED في سجل النشر'\n      }));\n      return;\n    }\n\n    if (queueIndex[c.event_key]) {\n      out.push(Object.assign({}, c, {\n        route: 'SKIP', state: 'SKIPPED_ALREADY_QUEUED',\n        reason: 'Event Key موجود في طابور النشر اليدوي بحالة ' + queueIndex[c.event_key]\n      }));\n      return;\n    }\n\n    if (win === 'MISSED_WINDOW') {\n      out.push(Object.assign({}, c, {\n        route: alertedMissed[c.event_key] ? 'SKIP' : 'MISSED_WINDOW',\n        state: alertedMissed[c.event_key] ? 'MISSED_WINDOW_ALREADY_ALERTED' : 'MISSED_WINDOW',\n        reason: 'فات موعد النشر بأكثر من LOOKBACK_HOURS ولم يُنشر — تنبيه فقط، بلا نشر تلقائي'\n      }));\n      return;\n    }\n\n    out.push(Object.assign({}, c, { route: 'DUE', state: 'CANDIDATE', reason: '' }));\n  });\n\n  return out;\n}\n\n/* ==================================================================\n * SC-03 — التطبيع ثم الحارس\n * ================================================================== */\n\nfunction sc03Normalize(input) {\n  var c = input.candidate;\n  return _built(\n    c,\n    _find(input.masterRows, c.content_id),\n    _find(input.approvalRows, c.content_id),\n    _find(input.packageRows, c.content_id),\n    input.publishLogRows\n  );\n}\n\nfunction sc03RunGuard(normalized) {\n  var verdict = _guard(normalized);\n  return Object.assign({}, normalized, {\n    guard_status: verdict.guard_status,\n    block_reasons: verdict.block_reasons,\n    state: verdict.guard_status === 'PASS' ? 'PASS' : 'BLOCKED'\n  });\n}\n\n/* ==================================================================\n * SC-06 — صف طابور النشر اليدوي\n * ================================================================== */\n\nvar QUEUE_HEADERS = [\n  'Event Key', 'ID', 'Scheduled At', 'Platform', 'Format', 'Topic', 'CTA',\n  'Approved Asset URL', 'Caption', 'Alt Text', 'Pinned Comment',\n  'State', 'Created At', 'Published At', 'Published URL', 'Operator Note'\n];\n\nfunction sc06BuildQueueRow(d, createdAtIso) {\n  return {\n    'Event Key': d.event_key,\n    'ID': d.content_id,\n    'Scheduled At': d.scheduled_at,\n    'Platform': d.platform,\n    'Format': d.format || d.post_type,\n    'Topic': d.topic,\n    'CTA': d.cta || '',\n    'Approved Asset URL': d.approved_asset_url,\n    'Caption': d.caption,\n    'Alt Text': d.alt_text,\n    'Pinned Comment': d.pinned_comment,\n    'State': 'READY_FOR_MANUAL_PUBLISH',\n    'Created At': createdAtIso,\n    'Published At': '',\n    'Published URL': '',\n    'Operator Note': 'انشر يدويًا من Meta Business Suite ثم حدّث State إلى PUBLISHED وأضف Published URL.'\n  };\n}\n\nfunction sc06FindUnsyncedPublished(queueRows, publishLogRows) {\n  var seen = {};\n  (publishLogRows || []).forEach(function (r) {\n    seen[_t(_f(r, ['ID'])) + '|' + _t(_f(r, ['رابط المنشور']))] = true;\n  });\n\n  var pending = [];\n  (queueRows || []).forEach(function (r) {\n    if (_u(_f(r, ['State'])) !== 'PUBLISHED') return;\n    var url = _t(_f(r, ['Published URL']));\n    var id = _t(_f(r, ['ID']));\n    if (!url || !id) return;\n    if (seen[id + '|' + url]) return;\n    seen[id + '|' + url] = true;\n    pending.push({\n      'ID': id,\n      'المنصة': _t(_f(r, ['Platform'])),\n      'صيغة النشر': _t(_f(r, ['Format'])),\n      'تاريخ النشر': _t(_f(r, ['Published At'])) || _t(_f(r, ['Scheduled At'])),\n      'رابط المنشور': url,\n      'حالة النشر': 'PUBLISHED',\n      'ملاحظات الأداء': ''\n    });\n  });\n  return pending;\n}\n\n/* ==================================================================\n * SC-05 — قرار التنبيه والتسجيل\n * ================================================================== */\n\nfunction sc05Decide(evt, autoLogRows) {\n  var cls = _alert(evt);\n  var key = _t(evt.event_key);\n  var already = false;\n  (autoLogRows || []).forEach(function (r) {\n    if (_t(_f(r, ['Event Key'])) === key && _u(_f(r, ['State'])) === _u(evt.state)) already = true;\n  });\n\n  return Object.assign({}, cls, {\n    event_key: key,\n    already_reported: already,\n    should_log: !already,\n    should_notify: !already\n  });\n}\n\n/* ==================================================================\n * سجل الأتمتة\n * ================================================================== */\n\nvar LOG_HEADERS = ['Timestamp', 'Workflow', 'Event Key', 'ID', 'State', 'Reason', 'Run ID', 'Details'];\n\nfunction buildLogRow(o) {\n  return {\n    'Timestamp': o.timestamp,\n    'Workflow': o.workflow,\n    'Event Key': o.event_key || '',\n    'ID': o.content_id || '',\n    'State': o.state,\n    'Reason': Array.isArray(o.reason) ? o.reason.join(', ') : (o.reason || ''),\n    'Run ID': o.run_id || '',\n    'Details': typeof o.details === 'string' ? o.details : JSON.stringify(o.details || {})\n  };\n}\n\n/* ================================================================== */\n\n/* ===== نهاية المكتبة المُحقَنة ===== */\n\n\n// كائن موحّد واحد لكل مرشّح (§17). القراءة بأسماء الأعمدة لا بأرقامها.\nconst rows = (name) => { try { return $(name).all().map(i => i.json); } catch (e) { return []; } };\n\nconst master     = rows('02 — Lookup Master Record');\nconst approval   = rows('03 — Lookup Approval Record');\nconst packages   = rows('04 — Lookup Publish Package');\nconst publishLog = rows('05 — Lookup Publish Log');\n\nreturn $('01 — Receive Content').all().map(item => {\n  const c = item.json;\n  const normalized = sc03Normalize({\n    candidate: c, masterRows: master, approvalRows: approval,\n    packageRows: packages, publishLogRows: publishLog\n  });\n  return { json: Object.assign({}, normalized, {\n    dry_run: c.dry_run, run_id: c.run_id, now_iso: c.now_iso,\n    timezone: c.timezone, source_workflow: 'SC-03'\n  }) };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        20
+      ],
+      "id": "c46d09e6-0000-4000-8000-88b1809e97fb",
+      "name": "06 — Normalize Data"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "/* ===== مُحقَن آليًا من workflows/content-factory/lib — لا تحرّره هنا ===== */\n\n/* المصدر: lib/core.js + lib/steps.js | المولّد: build/build.js            */\n\n/*\n * Shaghaf Content Factory — Automation Core\n * ------------------------------------------------------------------\n * المصدر الوحيد لمنطق: التوقيت، تطبيع الصفوف، Event Key، وPublish Guard.\n * هذا الملف يُحقن حرفيًا داخل عقد Code في n8n بواسطة build/build.js،\n * ونفس الملف تختبره tests/run-tests.js — فلا يمكن أن يفترق المُختبَر عن المُشغَّل.\n *\n * قاعدة حاكمة: هذا الكود منفّذ لا مُقرِّر. لا يكتب محتوى علميًا، ولا يعيد صياغة\n * caption، ولا يخفف أي شرط اعتماد. كل ما يفعله: يقرأ الحقائق ويصدر PASS/BLOCKED.\n */\n\nvar SC_TIMEZONE_DEFAULT = 'Asia/Jerusalem';\n\n/* ==================================================================\n * 1) التوقيت — Asia/Jerusalem صراحةً\n * ================================================================== */\n\n/** إزاحة المنطقة الزمنية بالدقائق عند لحظة UTC معيّنة (تراعي التوقيت الصيفي). */\nfunction tzOffsetMinutes(utcDate, tz) {\n  var dtf = new Intl.DateTimeFormat('en-US', {\n    timeZone: tz,\n    hour12: false,\n    year: 'numeric', month: '2-digit', day: '2-digit',\n    hour: '2-digit', minute: '2-digit', second: '2-digit'\n  });\n  var parts = {};\n  var list = dtf.formatToParts(utcDate);\n  for (var i = 0; i < list.length; i++) parts[list[i].type] = list[i].value;\n  var hour = parts.hour === '24' ? '00' : parts.hour;\n  var asUTC = Date.UTC(\n    Number(parts.year), Number(parts.month) - 1, Number(parts.day),\n    Number(hour), Number(parts.minute), Number(parts.second)\n  );\n  return (asUTC - utcDate.getTime()) / 60000;\n}\n\n/**\n * يحوّل تاريخًا/وقتًا \"محليًا في tz\" إلى لحظة UTC حقيقية.\n * 2026-09-02 20:00 + Asia/Jerusalem  ->  2026-09-02T17:00:00Z\n * التمريرة الثانية تصحّح الحالة الحدّية عند تبديل التوقيت الصيفي.\n */\nfunction zonedToUtc(y, mo, d, hh, mm, tz) {\n  var naive = Date.UTC(y, mo - 1, d, hh, mm, 0, 0);\n  var off = tzOffsetMinutes(new Date(naive), tz);\n  var ts = naive - off * 60000;\n  off = tzOffsetMinutes(new Date(ts), tz);\n  ts = naive - off * 60000;\n  return new Date(ts);\n}\n\nfunction pad2(n) { return (n < 10 ? '0' : '') + n; }\n\n/** ISO-8601 بإزاحة المنطقة الظاهرة: 2026-09-02T20:00:00+03:00 */\nfunction formatIsoWithOffset(utcDate, tz) {\n  var off = tzOffsetMinutes(utcDate, tz);\n  var local = new Date(utcDate.getTime() + off * 60000);\n  var sign = off >= 0 ? '+' : '-';\n  var abs = Math.abs(off);\n  return local.getUTCFullYear() + '-' + pad2(local.getUTCMonth() + 1) + '-' + pad2(local.getUTCDate()) +\n    'T' + pad2(local.getUTCHours()) + ':' + pad2(local.getUTCMinutes()) + ':' + pad2(local.getUTCSeconds()) +\n    sign + pad2(Math.floor(abs / 60)) + ':' + pad2(abs % 60);\n}\n\n/** يقرأ خانة تاريخ من Sheets: نص ISO، أو d/m/Y، أو كائن Date. */\nfunction parseSheetDate(value) {\n  if (value === null || value === undefined || value === '') return null;\n  if (value instanceof Date && !isNaN(value.getTime())) {\n    return { y: value.getUTCFullYear(), mo: value.getUTCMonth() + 1, d: value.getUTCDate() };\n  }\n  var s = String(value).trim();\n  var m = s.match(/^(\\d{4})[-/](\\d{1,2})[-/](\\d{1,2})/);\n  if (m) return { y: Number(m[1]), mo: Number(m[2]), d: Number(m[3]) };\n  m = s.match(/^(\\d{1,2})[-/](\\d{1,2})[-/](\\d{4})/);\n  if (m) return { y: Number(m[3]), mo: Number(m[2]), d: Number(m[1]) };\n  return null;\n}\n\n/** يقرأ خانة وقت من Sheets: \"20:00\"، \"20:00:00\"، كائن Date، أو كسر تسلسلي. */\nfunction parseSheetTime(value) {\n  if (value === null || value === undefined || value === '') return null;\n  if (value instanceof Date && !isNaN(value.getTime())) {\n    return { hh: value.getUTCHours(), mm: value.getUTCMinutes() };\n  }\n  if (typeof value === 'number' && isFinite(value)) {\n    var frac = value - Math.floor(value);\n    var mins = Math.round(frac * 24 * 60);\n    return { hh: Math.floor(mins / 60) % 24, mm: mins % 60 };\n  }\n  var s = String(value).trim();\n  var m = s.match(/(\\d{1,2}):(\\d{2})/);\n  if (!m) return null;\n  var hh = Number(m[1]);\n  var mm = Number(m[2]);\n  if (/pm/i.test(s) && hh < 12) hh += 12;\n  if (/am/i.test(s) && hh === 12) hh = 0;\n  if (hh > 23 || mm > 59) return null;\n  return { hh: hh, mm: mm };\n}\n\n/** يبني scheduled_at من (التاريخ + الوقت) مفسَّرين صراحةً في tz. */\nfunction buildScheduledAt(dateValue, timeValue, tz) {\n  var d = parseSheetDate(dateValue);\n  var t = parseSheetTime(timeValue);\n  if (!d || !t) return null;\n  var utc = zonedToUtc(d.y, d.mo, d.d, t.hh, t.mm, tz);\n  return { utc: utc, iso: formatIsoWithOffset(utc, tz) };\n}\n\n/* ==================================================================\n * 2) قراءة الأعمدة بالاسم لا بالرقم\n * ================================================================== */\n\n/** توحيد اسم العمود: مسافات، تطويل، محارف اتجاهية، أشكال يونيكود. */\nfunction normHeader(name) {\n  return String(name === null || name === undefined ? '' : name)\n    .normalize('NFKC')\n    .replace(/[ـ‎‏‪-‮⁦-⁩]/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim()\n    .toLowerCase();\n}\n\n/** يجلب قيمة عمود من صف عبر اسمه أو أي اسم بديل. لا يعتمد على ترتيب الأعمدة. */\nfunction field(row, names) {\n  if (!row) return '';\n  var wanted = Array.isArray(names) ? names : [names];\n  var index = {};\n  var keys = Object.keys(row);\n  for (var i = 0; i < keys.length; i++) index[normHeader(keys[i])] = row[keys[i]];\n  for (var j = 0; j < wanted.length; j++) {\n    var k = normHeader(wanted[j]);\n    if (Object.prototype.hasOwnProperty.call(index, k)) {\n      var v = index[k];\n      return v === null || v === undefined ? '' : v;\n    }\n  }\n  return '';\n}\n\n/** نص مُشذّب للمقارنة الحرفية. */\nfunction text(value) {\n  return String(value === null || value === undefined ? '' : value)\n    .normalize('NFKC')\n    .replace(/[ـ‎‏‪-‮⁦-⁩]/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction upper(value) { return text(value).toUpperCase(); }\n\n/** بحث عن صف بالـID داخل مصفوفة صفوف. */\nfunction findById(rows, id, idNames) {\n  var target = text(id);\n  if (!target) return null;\n  var names = idNames || ['ID'];\n  for (var i = 0; i < (rows || []).length; i++) {\n    if (text(field(rows[i], names)) === target) return rows[i];\n  }\n  return null;\n}\n\n/* ==================================================================\n * 3) Event Key — منع التكرار\n * ================================================================== */\n\n/** content_id | scheduled_at | channel | post_type */\nfunction buildEventKey(contentId, scheduledAtIso, channel, postType) {\n  return [text(contentId), text(scheduledAtIso), text(channel), text(postType)].join('|');\n}\n\n/* ==================================================================\n * 4) تطبيع صف التقويم -> مرشّح\n * ================================================================== */\n\nvar CAL = {\n  id: ['ID'],\n  date: ['التاريخ'],\n  time: ['الوقت'],\n  topic: ['الموضوع'],\n  postType: ['نوع المنشور'],\n  channel: ['القناة'],\n  prodStatus: ['حالة الإنتاج'],\n  sciStatus: ['الحالة العلمية'],\n  cta: ['CTA']\n};\n\nfunction normalizeCalendarRow(row, tz) {\n  var id = text(field(row, CAL.id));\n  var built = buildScheduledAt(field(row, CAL.date), field(row, CAL.time), tz);\n  var channel = text(field(row, CAL.channel));\n  var postType = text(field(row, CAL.postType));\n  return {\n    content_id: id,\n    topic: text(field(row, CAL.topic)),\n    platform: channel,\n    channel: channel,\n    post_type: postType,\n    format: postType,\n    cta: text(field(row, CAL.cta)),\n    calendar_status: text(field(row, CAL.prodStatus)),\n    calendar_science_status: text(field(row, CAL.sciStatus)),\n    scheduled_at: built ? built.iso : '',\n    scheduled_at_ms: built ? built.utc.getTime() : null,\n    event_key: built ? buildEventKey(id, built.iso, channel, postType) : ''\n  };\n}\n\n/* ==================================================================\n * 5) نافذة الاستحقاق\n * ================================================================== */\n\n/**\n * DUE            : now - LOOKBACK_HOURS <= scheduled_at <= now + LEAD_MINUTES\n * MISSED_WINDOW  : scheduled_at أقدم من نافذة الاسترجاع ولم يُنشر  -> تنبيه فقط، بلا طابور\n * NOT_DUE        : لم يحن بعد\n * INVALID_SCHEDULE : تعذّر بناء scheduled_at\n */\nfunction classifyWindow(candidate, nowMs, leadMinutes, lookbackHours) {\n  if (candidate.scheduled_at_ms === null) return 'INVALID_SCHEDULE';\n  var upperBound = nowMs + leadMinutes * 60000;\n  var lowerBound = nowMs - lookbackHours * 3600000;\n  if (candidate.scheduled_at_ms > upperBound) return 'NOT_DUE';\n  if (candidate.scheduled_at_ms < lowerBound) return 'MISSED_WINDOW';\n  return 'DUE';\n}\n\n/* ==================================================================\n * 6) تطبيع بيانات Publish Guard\n * ================================================================== */\n\nvar MASTER = {\n  id: ['ID'],\n  science: ['حالة التدقيق العلمي'],\n  production: ['حالة الإنتاج'],\n  approvedAsset: ['رابط الملف المعتمد'],\n  v2: ['نسخة V2'],\n  topic: ['الموضوع']\n};\n\nvar APPROVAL = {\n  id: ['ID'],\n  science: ['QA علمي'],\n  language: ['QA لغوي'],\n  pedagogy: ['QA تربوي'],\n  visual: ['QA بصري'],\n  status: ['حالة الاعتماد'],\n  reason: ['سبب الرفض/المراجعة', 'سبب الرفض / المراجعة']\n};\n\nvar PACKAGE = {\n  id: ['ID'],\n  version: ['Version'],\n  status: ['Status'],\n  caption: ['Caption'],\n  altText: ['Alt Text'],\n  pinned: ['Pinned Comment'],\n  storyBefore: ['Story Before'],\n  storyAfter: ['Story After'],\n  hashtags: ['Hashtags']\n};\n\nvar PUBLOG = {\n  id: ['ID'],\n  platform: ['المنصة'],\n  format: ['صيغة النشر'],\n  date: ['تاريخ النشر'],\n  url: ['رابط المنشور'],\n  status: ['حالة النشر']\n};\n\n/** هل السجل في سجل النشر يعني \"منشور فعلًا\"؟ */\nfunction isPublishedState(value) {\n  var v = upper(value);\n  return v.indexOf('PUBLISHED') !== -1 || text(value).indexOf('منشور') !== -1;\n}\n\n/**\n * يبني الكائن الموحّد الذي يستهلكه Publish Guard.\n * masterRow / approvalRow / packageRow قد تكون null — الحارس يتعامل مع ذلك.\n */\nfunction buildNormalized(candidate, masterRow, approvalRow, packageRow, publishLogRows) {\n  var alreadyPublished = false;\n  var rows = publishLogRows || [];\n  for (var i = 0; i < rows.length; i++) {\n    if (text(field(rows[i], PUBLOG.id)) === text(candidate.content_id) &&\n        isPublishedState(field(rows[i], PUBLOG.status))) {\n      alreadyPublished = true;\n      break;\n    }\n  }\n\n  return {\n    event_key: candidate.event_key,\n    content_id: candidate.content_id,\n    topic: candidate.topic || text(field(masterRow, MASTER.topic)),\n    platform: candidate.platform,\n    post_type: candidate.post_type,\n    format: candidate.format || candidate.post_type,\n    cta: candidate.cta || '',\n    scheduled_at: candidate.scheduled_at,\n    calendar_status: candidate.calendar_status,\n\n    master_record_found: !!masterRow,\n    science_status: text(field(masterRow, MASTER.science)),\n    production_status: text(field(masterRow, MASTER.production)),\n    approved_asset_url: text(field(masterRow, MASTER.approvedAsset)),\n    v2_version: text(field(masterRow, MASTER.v2)),\n\n    approval_record_found: !!approvalRow,\n    qa_science: text(field(approvalRow, APPROVAL.science)),\n    qa_language: text(field(approvalRow, APPROVAL.language)),\n    qa_pedagogy: text(field(approvalRow, APPROVAL.pedagogy)),\n    qa_visual: text(field(approvalRow, APPROVAL.visual)),\n    approval_status: text(field(approvalRow, APPROVAL.status)),\n    approval_reason: text(field(approvalRow, APPROVAL.reason)),\n\n    package_found: !!packageRow,\n    package_version: text(field(packageRow, PACKAGE.version)),\n    package_status: text(field(packageRow, PACKAGE.status)),\n    caption: String(field(packageRow, PACKAGE.caption) || ''),\n    alt_text: String(field(packageRow, PACKAGE.altText) || ''),\n    pinned_comment: String(field(packageRow, PACKAGE.pinned) || ''),\n    story_before: String(field(packageRow, PACKAGE.storyBefore) || ''),\n    story_after: String(field(packageRow, PACKAGE.storyAfter) || ''),\n    hashtags: String(field(packageRow, PACKAGE.hashtags) || ''),\n\n    already_published: alreadyPublished\n  };\n}\n\n/* ==================================================================\n * 7) Publish Guard — القرار\n * ================================================================== */\n\nvar SCIENCE_APPROVED_LITERAL = 'مدققة علميًا وجاهزة للإنتاج';\n\n/** قيم تنقض أي ادعاء اعتماد حتى لو ظهرت كلمة APPROVED في النص. */\nvar NEGATING_TOKENS = ['NEEDS REVIEW', 'PENDING', 'DRAFT', 'BLOCKED', 'REJECT', 'HOLD', 'REQUIRES', 'AWAITING'];\n\nfunction hasNegatingToken(value) {\n  var v = upper(value);\n  for (var i = 0; i < NEGATING_TOKENS.length; i++) {\n    if (v.indexOf(NEGATING_TOKENS[i]) !== -1) return true;\n  }\n  return false;\n}\n\n/**\n * لا يمر شيء إلا باستيفاء كل الشروط. الترتيب مقصود: أسباب الحظر تُجمع كلها\n * ولا نتوقف عند أول سبب — لأن §35 يطلب صورة كاملة لسبب الحظر.\n */\nfunction runPublishGuard(d) {\n  var reasons = [];\n\n  if (!d.master_record_found) reasons.push('MASTER_RECORD_MISSING');\n  if (!d.approval_record_found) reasons.push('APPROVAL_RECORD_MISSING');\n\n  if (text(d.science_status) !== SCIENCE_APPROVED_LITERAL) reasons.push('SCIENCE_NOT_APPROVED');\n\n  if (upper(d.qa_science) !== 'PASS') reasons.push('QA_SCIENCE_NOT_PASS');\n  if (upper(d.qa_language) !== 'PASS') reasons.push('QA_LANGUAGE_NOT_PASS');\n  if (upper(d.qa_pedagogy) !== 'PASS') reasons.push('QA_PEDAGOGY_NOT_PASS');\n  if (upper(d.qa_visual) !== 'PASS') reasons.push('QA_VISUAL_NOT_PASS');\n\n  if (upper(d.approval_status) !== 'APPROVED') reasons.push('FINAL_APPROVAL_MISSING');\n\n  // §16.7 — حالة الإنتاج يجب أن تدل بوضوح على APPROVED / READY TO PUBLISH.\n  // تشديد مقصود: \"APPROVED — PENDING FIX\" لا يُعتبر اعتمادًا.\n  if (!d.production_status || upper(d.production_status).indexOf('APPROVED') === -1) {\n    reasons.push('PRODUCTION_NOT_APPROVED');\n  } else if (hasNegatingToken(d.production_status)) {\n    reasons.push('PRODUCTION_APPROVAL_CONDITIONAL');\n  }\n\n  if (!text(d.approved_asset_url)) reasons.push('APPROVED_ASSET_MISSING');\n\n  if (!text(d.v2_version)) reasons.push('V2_VERSION_MISSING');\n  else if (hasNegatingToken(d.v2_version)) reasons.push('V2_VERSION_PENDING');\n\n  if (!d.package_found) reasons.push('PUBLISH_PACKAGE_NOT_FOUND');\n  if (upper(d.package_status) !== 'APPROVED') reasons.push('PUBLISH_PACKAGE_NOT_APPROVED');\n\n  if (!text(d.caption)) reasons.push('CAPTION_MISSING');\n\n  if (d.already_published === true) reasons.push('ALREADY_PUBLISHED');\n\n  var unique = [];\n  for (var i = 0; i < reasons.length; i++) {\n    if (unique.indexOf(reasons[i]) === -1) unique.push(reasons[i]);\n  }\n\n  return {\n    guard_status: unique.length === 0 ? 'PASS' : 'BLOCKED',\n    block_reasons: unique\n  };\n}\n\n/* ==================================================================\n * 8) تصنيف أحداث SC-05 — أي خطأ يستحق إعادة المحاولة؟\n * ================================================================== */\n\n/** أسباب حظر ناتجة عن قواعد العمل: لا إعادة محاولة إطلاقًا، ننتظر تعديل البيانات. */\nvar BUSINESS_BLOCK_REASONS = [\n  'MASTER_RECORD_MISSING', 'APPROVAL_RECORD_MISSING', 'SCIENCE_NOT_APPROVED',\n  'QA_SCIENCE_NOT_PASS', 'QA_LANGUAGE_NOT_PASS', 'QA_PEDAGOGY_NOT_PASS', 'QA_VISUAL_NOT_PASS',\n  'FINAL_APPROVAL_MISSING', 'PRODUCTION_NOT_APPROVED', 'PRODUCTION_APPROVAL_CONDITIONAL',\n  'APPROVED_ASSET_MISSING', 'V2_VERSION_MISSING', 'V2_VERSION_PENDING',\n  'PUBLISH_PACKAGE_NOT_FOUND', 'PUBLISH_PACKAGE_NOT_APPROVED', 'CAPTION_MISSING',\n  'ALREADY_PUBLISHED'\n];\n\nfunction classifyAlertEvent(evt) {\n  var state = upper(evt && evt.state);\n  if (state === 'ERROR') {\n    return { category: 'TECHNICAL_ERROR', retry_allowed: true, max_additional_retries: 2 };\n  }\n  if (state === 'MISSED_WINDOW') {\n    return { category: 'MISSED_WINDOW', retry_allowed: false, max_additional_retries: 0 };\n  }\n  return { category: 'BUSINESS_BLOCK', retry_allowed: false, max_additional_retries: 0 };\n}\n\n/* ================================================================== */\n\n/*\n * Shaghaf Content Factory — Step Logic\n * ------------------------------------------------------------------\n * منطق كل عقدة Code في SC-01 / SC-03 / SC-05 / SC-06، كدوال نقية.\n * يعتمد على lib/core.js. يُحقن حرفيًا داخل n8n، ويُختبر كما هو.\n */\n\n/* eslint-disable no-undef */\nvar _f = field, _t = text, _u = upper, _find = findById;\nvar _norm = normalizeCalendarRow, _class = classifyWindow;\nvar _built = buildNormalized, _guard = runPublishGuard;\nvar _pubst = isPublishedState, _alert = classifyAlertEvent;\n\n/* ==================================================================\n * SC-01 — بناء المرشحين\n * ================================================================== */\n\nvar QUEUE_ACTIVE_STATES = ['READY_FOR_MANUAL_PUBLISH', 'PUBLISHED'];\n\nfunction sc01BuildCandidates(input) {\n  var cfg = input.config;\n  var tz = cfg.TIMEZONE;\n  var nowMs = input.nowMs;\n  var out = [];\n\n  var queueIndex = {};\n  (input.queueRows || []).forEach(function (r) {\n    var k = _t(_f(r, ['Event Key']));\n    if (!k) return;\n    var st = _u(_f(r, ['State']));\n    if (QUEUE_ACTIVE_STATES.indexOf(st) !== -1) queueIndex[k] = st;\n  });\n\n  var publishedIds = {};\n  (input.publishLogRows || []).forEach(function (r) {\n    if (_pubst(_f(r, ['حالة النشر']))) publishedIds[_t(_f(r, ['ID']))] = true;\n  });\n\n  var alertedMissed = {};\n  (input.autoLogRows || []).forEach(function (r) {\n    if (_u(_f(r, ['State'])) === 'MISSED_WINDOW') alertedMissed[_t(_f(r, ['Event Key']))] = true;\n  });\n\n  (input.calendarRows || []).forEach(function (row) {\n    var c = _norm(row, tz);\n    if (!c.content_id) return;\n\n    if (!c.event_key) {\n      out.push(Object.assign({}, c, {\n        route: 'INVALID_SCHEDULE', state: 'ERROR',\n        reason: 'INVALID_SCHEDULE — تعذّر بناء scheduled_at من التاريخ/الوقت'\n      }));\n      return;\n    }\n\n    var win = _class(c, nowMs, cfg.LEAD_MINUTES, cfg.LOOKBACK_HOURS);\n    if (win === 'NOT_DUE') return;\n\n    if (publishedIds[c.content_id]) {\n      out.push(Object.assign({}, c, {\n        route: 'SKIP', state: 'SKIPPED_ALREADY_PUBLISHED',\n        reason: 'العنصر مسجَّل PUBLISHED في سجل النشر'\n      }));\n      return;\n    }\n\n    if (queueIndex[c.event_key]) {\n      out.push(Object.assign({}, c, {\n        route: 'SKIP', state: 'SKIPPED_ALREADY_QUEUED',\n        reason: 'Event Key موجود في طابور النشر اليدوي بحالة ' + queueIndex[c.event_key]\n      }));\n      return;\n    }\n\n    if (win === 'MISSED_WINDOW') {\n      out.push(Object.assign({}, c, {\n        route: alertedMissed[c.event_key] ? 'SKIP' : 'MISSED_WINDOW',\n        state: alertedMissed[c.event_key] ? 'MISSED_WINDOW_ALREADY_ALERTED' : 'MISSED_WINDOW',\n        reason: 'فات موعد النشر بأكثر من LOOKBACK_HOURS ولم يُنشر — تنبيه فقط، بلا نشر تلقائي'\n      }));\n      return;\n    }\n\n    out.push(Object.assign({}, c, { route: 'DUE', state: 'CANDIDATE', reason: '' }));\n  });\n\n  return out;\n}\n\n/* ==================================================================\n * SC-03 — التطبيع ثم الحارس\n * ================================================================== */\n\nfunction sc03Normalize(input) {\n  var c = input.candidate;\n  return _built(\n    c,\n    _find(input.masterRows, c.content_id),\n    _find(input.approvalRows, c.content_id),\n    _find(input.packageRows, c.content_id),\n    input.publishLogRows\n  );\n}\n\nfunction sc03RunGuard(normalized) {\n  var verdict = _guard(normalized);\n  return Object.assign({}, normalized, {\n    guard_status: verdict.guard_status,\n    block_reasons: verdict.block_reasons,\n    state: verdict.guard_status === 'PASS' ? 'PASS' : 'BLOCKED'\n  });\n}\n\n/* ==================================================================\n * SC-06 — صف طابور النشر اليدوي\n * ================================================================== */\n\nvar QUEUE_HEADERS = [\n  'Event Key', 'ID', 'Scheduled At', 'Platform', 'Format', 'Topic', 'CTA',\n  'Approved Asset URL', 'Caption', 'Alt Text', 'Pinned Comment',\n  'State', 'Created At', 'Published At', 'Published URL', 'Operator Note'\n];\n\nfunction sc06BuildQueueRow(d, createdAtIso) {\n  return {\n    'Event Key': d.event_key,\n    'ID': d.content_id,\n    'Scheduled At': d.scheduled_at,\n    'Platform': d.platform,\n    'Format': d.format || d.post_type,\n    'Topic': d.topic,\n    'CTA': d.cta || '',\n    'Approved Asset URL': d.approved_asset_url,\n    'Caption': d.caption,\n    'Alt Text': d.alt_text,\n    'Pinned Comment': d.pinned_comment,\n    'State': 'READY_FOR_MANUAL_PUBLISH',\n    'Created At': createdAtIso,\n    'Published At': '',\n    'Published URL': '',\n    'Operator Note': 'انشر يدويًا من Meta Business Suite ثم حدّث State إلى PUBLISHED وأضف Published URL.'\n  };\n}\n\nfunction sc06FindUnsyncedPublished(queueRows, publishLogRows) {\n  var seen = {};\n  (publishLogRows || []).forEach(function (r) {\n    seen[_t(_f(r, ['ID'])) + '|' + _t(_f(r, ['رابط المنشور']))] = true;\n  });\n\n  var pending = [];\n  (queueRows || []).forEach(function (r) {\n    if (_u(_f(r, ['State'])) !== 'PUBLISHED') return;\n    var url = _t(_f(r, ['Published URL']));\n    var id = _t(_f(r, ['ID']));\n    if (!url || !id) return;\n    if (seen[id + '|' + url]) return;\n    seen[id + '|' + url] = true;\n    pending.push({\n      'ID': id,\n      'المنصة': _t(_f(r, ['Platform'])),\n      'صيغة النشر': _t(_f(r, ['Format'])),\n      'تاريخ النشر': _t(_f(r, ['Published At'])) || _t(_f(r, ['Scheduled At'])),\n      'رابط المنشور': url,\n      'حالة النشر': 'PUBLISHED',\n      'ملاحظات الأداء': ''\n    });\n  });\n  return pending;\n}\n\n/* ==================================================================\n * SC-05 — قرار التنبيه والتسجيل\n * ================================================================== */\n\nfunction sc05Decide(evt, autoLogRows) {\n  var cls = _alert(evt);\n  var key = _t(evt.event_key);\n  var already = false;\n  (autoLogRows || []).forEach(function (r) {\n    if (_t(_f(r, ['Event Key'])) === key && _u(_f(r, ['State'])) === _u(evt.state)) already = true;\n  });\n\n  return Object.assign({}, cls, {\n    event_key: key,\n    already_reported: already,\n    should_log: !already,\n    should_notify: !already\n  });\n}\n\n/* ==================================================================\n * سجل الأتمتة\n * ================================================================== */\n\nvar LOG_HEADERS = ['Timestamp', 'Workflow', 'Event Key', 'ID', 'State', 'Reason', 'Run ID', 'Details'];\n\nfunction buildLogRow(o) {\n  return {\n    'Timestamp': o.timestamp,\n    'Workflow': o.workflow,\n    'Event Key': o.event_key || '',\n    'ID': o.content_id || '',\n    'State': o.state,\n    'Reason': Array.isArray(o.reason) ? o.reason.join(', ') : (o.reason || ''),\n    'Run ID': o.run_id || '',\n    'Details': typeof o.details === 'string' ? o.details : JSON.stringify(o.details || {})\n  };\n}\n\n/* ================================================================== */\n\n/* ===== نهاية المكتبة المُحقَنة ===== */\n\n\n// القرار. لا يمر شيء إلا باستيفاء كل الشروط (§16).\nreturn $input.all().map(i => ({ json: sc03RunGuard(i.json) }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        20
+      ],
+      "id": "0a9b35a1-0000-4000-8000-9f2268d9594f",
+      "name": "07 — Run Publish Guard"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "af7dafc3-0000-4000-8000-4b2f15d0c1fd",
+              "leftValue": "={{ $json.guard_status }}",
+              "rightValue": "PASS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        840,
+        20
+      ],
+      "id": "fc26ff5f-0000-4000-8000-6be248652e19",
+      "name": "08 — PASS?"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_SC-06_WORKFLOW_ID",
+          "mode": "id",
+          "cachedResultName": "SC-06 | Manual Publish Bridge"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        -80
+      ],
+      "id": "2d7196b1-0000-4000-8000-84754e2c2550",
+      "name": "09A — Execute SC-06 Manual Bridge",
+      "notes": "بعد الاستيراد: اختر SC-06 | Manual Publish Bridge من القائمة ليُستبدل REPLACE_WITH_SC-06_WORKFLOW_ID."
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_SC-05_WORKFLOW_ID",
+          "mode": "id",
+          "cachedResultName": "SC-05 | Alerts & Recovery"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        140
+      ],
+      "id": "731e1e30-0000-4000-8000-a26069407a57",
+      "name": "09B — Execute SC-05 Alerts",
+      "notes": "بعد الاستيراد: اختر SC-05 | Alerts & Recovery من القائمة ليُستبدل REPLACE_WITH_SC-05_WORKFLOW_ID."
+    },
+    {
+      "parameters": {
+        "content": "### لماذا لا توجد عقدة نشر هنا؟\n\nSC-02 (Social Publisher) **BLOCKED — META DEV LOOP**.\nالمسار الوحيد للنشر حاليًا: SC-06 -> طابور يدوي -> Meta Business Suite بيد المشغّل.",
+        "height": 160,
+        "width": 420,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        320
+      ],
+      "id": "2493ea0d-0000-4000-8000-bfd089b14bd4",
+      "name": "Note 37"
+    }
+  ],
+  "connections": {
+    "01 — Receive Content": {
+      "main": [
+        [
+          {
+            "node": "02 — Lookup Master Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "02 — Lookup Master Record": {
+      "main": [
+        [
+          {
+            "node": "03 — Lookup Approval Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03 — Lookup Approval Record": {
+      "main": [
+        [
+          {
+            "node": "04 — Lookup Publish Package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04 — Lookup Publish Package": {
+      "main": [
+        [
+          {
+            "node": "05 — Lookup Publish Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05 — Lookup Publish Log": {
+      "main": [
+        [
+          {
+            "node": "06 — Normalize Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "06 — Normalize Data": {
+      "main": [
+        [
+          {
+            "node": "07 — Run Publish Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "07 — Run Publish Guard": {
+      "main": [
+        [
+          {
+            "node": "08 — PASS?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "08 — PASS?": {
+      "main": [
+        [
+          {
+            "node": "09A — Execute SC-06 Manual Bridge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "09B — Execute SC-05 Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jerusalem",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "shaghaf-content-factory"
+  },
+  "tags": []
+}

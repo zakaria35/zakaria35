@@ -1,0 +1,6 @@
+﻿Workflow ID,الحالة,آخر تحديث,n8n Workflow ID,n8n Workflow URL,ملاحظات
+SC-01,IMPORT READY — AWAITING CREDENTIAL BINDING,2026-09-02,(يُملأ بعد الاستيراد),(يُملأ بعد الاستيراد),ملف جاهز: workflows/content-factory/n8n/SC-01-publishing-queue.json — DRY_RUN=true
+SC-02,BLOCKED — META DEV LOOP,2026-09-02,—,—,لم يُبنَ ولم يُنشأ له اعتماد. لا نشر تلقائي إلى Meta.
+SC-03,IMPORT READY — AWAITING CREDENTIAL BINDING,2026-09-02,(يُملأ بعد الاستيراد),(يُملأ بعد الاستيراد),ملف جاهز: SC-03-publish-guard.json — 25/25 اختبار ناجح
+SC-05,IMPORT READY — AWAITING CREDENTIAL BINDING,2026-09-02,(يُملأ بعد الاستيراد),(يُملأ بعد الاستيراد),ملف جاهز: SC-05-alerts-recovery.json
+SC-06,IMPORT READY — AWAITING CREDENTIAL BINDING,2026-09-02,(يُملأ بعد الاستيراد),(يُملأ بعد الاستيراد),ملف جاهز: SC-06-manual-publish-bridge.json
