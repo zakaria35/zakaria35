@@ -146,8 +146,10 @@ node workflows/content-factory/build/build-sheets.js       # إعادة تولي
 تحتاج ربطًا صريحًا باعتماد **Google Sheets OAuth2**. هذا الدرس مسجَّل عندك من
 إطلاق بوت كيميا: «الاعتمادات لا تُربط تلقائيًا عند إنشاء السير برمجيًا».
 
-إن لم يوجد اعتماد Google Sheets: أنشئه من داخل n8n بمسار OAuth الرسمي.
-لا تضع Client Secret في أي عقدة أو ملاحظة.
+**فُحص فعليًا:** الاعتماد المطلوب **موجود لديك بالفعل** باسم
+**`Google Sheets account`** (نوع `googleSheetsOAuth2Api`). اخترْه من القائمة
+في كل عقدة Google Sheets — لا حاجة لإنشاء اعتماد جديد ولا لأي Client Secret.
+تفاصيل الفحص كاملة في [`N8N-INSPECTION.md`](N8N-INSPECTION.md).
 
 ### 2ب — استبدل معرّفات Execute Workflow
 
