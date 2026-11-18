@@ -103,3 +103,46 @@ switch 3.2 · splitInBatches 3 · agent 3.1 · httpRequest 4.3–4.4
   `حالة الاعتماد = NEEDS REVIEW`، `رابط الملف المعتمد` فارغ،
   `نسخة V2 = V2-V2 — PENDING FINAL FIX`.
   رفع الحظر بتعديل البيانات لا بتعديل الكود.
+
+---
+
+## قيود محلّل الـSDK — مكتشفة بالتجربة لا بالافتراض
+
+ثلاث محاولات تحقق فاشلة كشفت ما لا تذكره الوثائق:
+
+1. **لا يقبل تعليقات أنواع TypeScript** رغم أن وصف الأداة يقول
+   «TypeScript/JavaScript». `function f(x: string)` يفشل بخطأ نحوي.
+2. **لا يقبل تعريف الدوال إطلاقًا** — `FunctionDeclaration ... is not
+   allowed in SDK code`. كل عقدة تُكتب صراحةً، ولا دوال مساعدة.
+   لذلك ملفات الـSDK مُسهَبة عمدًا.
+3. **`newCredential('Name', 'id')` لا يربط الاعتماد.** الصيغة ذات
+   الوسيطين تُقبل في التحقق ثم **تُسقَط بصمت** عند الإنشاء — نتج سير
+   بلا أي اعتماد على عقد Google Sheets الستة.
+   الربط الصحيح: `update_workflow` بعملية `setNodeCredential`
+   (`credentialKey` + `credentialId` + `credentialName`) بعد الإنشاء.
+   المؤشر على الفشل: `autoAssignedCredentials: []` في نتيجة الإنشاء.
+
+**`columns.schema` اختياري** مع `autoMapInputData` — العقدة تقرأ رؤوس
+الشيت وقت التشغيل. `schema: []` يكفي ويقصّر الكود كثيرًا.
+
+## نسخ العقد الفعلية (مقابل ما في ملفات JSON)
+
+| العقدة | الفعلي | في JSON |
+|---|---|---|
+| googleSheets | **4.7** | 4.5 |
+| if | **2.3** | 2.2 |
+| scheduleTrigger | **1.3** | 1.2 |
+| executeWorkflow | **1.3** | 1.2 |
+| executeWorkflowTrigger | **1.2** | 1.1 |
+| switch | **3.4** | — |
+| code · noOp · errorTrigger · manualTrigger | 2 · 1 · 1 · 1 | مطابق |
+
+## ما أُنشئ فعلًا
+
+| السير | المعرّف | الحالة |
+|---|---|---|
+| SC-00 \| Setup — Master Control Tabs | `xF648xJtJ8YlPuPb` | 11 عقدة، غير مُفعّل، يشير إلى جدول اختبار |
+
+جدول الاختبار المؤقت: `1Hz1MJv5nkQsB40OSVH3HP8B-R0d784xgABtc_F8TZEk`
+(«ZZ TEMP — SC-00 Tab Creation Test») — يُحذف بعد التحقق.
+السبب: التحقق من هبوط الرؤوس صحيحةً قبل لمس Master Control.
