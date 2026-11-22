@@ -158,3 +158,79 @@ at getPublishedWorkflowData
 - **SC-01**: يبقى غير مُفعّل، ويُشغَّل يدويًا للاختبار.
 
 لم أفعّل شيئًا؛ القرار قرارك.
+
+---
+
+# التفعيل والاختبار الكامل — 2026-11-22
+
+## فُعّلت ثلاثة سيرات
+
+| السير | المعرّف | activeVersionId |
+|---|---|---|
+| SC-05 \| Alerts & Recovery | `MLf9UcT6uLofmkln` | `54716e6f-…` (بعد الإصلاح) |
+| SC-06 \| Manual Publish Bridge | `SADTLmvlAQagMAbe` | `a843e705-…` |
+| SC-03 \| Publish Guard | `vkV8kYXq4KNFHH7n` | `edf89a61-…` |
+
+**SC-01 بقي غير مُفعّل** و`DRY_RUN = true`. السبب: الانتقال للتشغيل
+الحقيقي قرار المالك، ولا شيء مستحق قبل 2026-12-02 على أي حال.
+
+## 🐛 خلل حقيقي وُجد بالتشغيل وأُصلح
+
+التشغيل 2104 نجح تقنيًا لكن مخرجه كان فارغًا: `ID` و`State` و`Event Key`
+كلها خالية.
+
+**السبب الجذري:** عقدة `04 — Classify & Dedupe` في SC-05 كانت تقرأ
+`$input.all()`. وهي تأتي بعد `03 — Read Automation Log`، فكان `$input`
+هو **صفوف السجل** لا الحدث. ومع `alwaysOutputData: true` على عقدة
+القراءة، أنتج السجل الفارغ عنصرًا `{}` واحدًا صُنّف كأنه حدث.
+
+**الإصلاح:** تقرأ العقدة الحدث بالاسم من مصدريه المحتملين:
+
+```js
+const gather = function (name) {
+  try { return $(name).all().map(i => i.json)
+    .filter(j => j && Object.keys(j).length > 0 && txt(j.state)); }
+  catch (e) { return []; }
+};
+const events = gather('01 — Receive Event')
+  .concat(gather('02 — Normalize Error Event'));
+```
+
+وفُحصت العقد المماثلة: SC-03 و SC-06 و SC-01 تقرأ كلها بالاسم أصلًا
+(`$('01 — Receive Content')` …) فلا يوجد الخلل فيها.
+
+**بعد الإصلاح (التشغيل 2108)** وصل الحدث كاملًا:
+
+```
+ID: FOUNDATION-001-PRE01
+State: BLOCKED
+Reason: MASTER_RECORD_MISSING, APPROVAL_RECORD_MISSING, … (14 سببًا)
+Details: {"category":"BUSINESS_BLOCK","retry_allowed":false,
+          "max_additional_retries":0,"source_workflow":"SC-03",
+          "scheduled_at":"2026-11-29T21:00:00+02:00"}
+```
+
+السلسلة كاملة مُثبتة: SC-01 → SC-03 (`subExecution 2109`) → SC-05.
+
+## ⚠️ اكتشاف تشغيلي: المنشورات المشتقة كلها محظورة
+
+السبعة المشتقة — `PRE01` · `PRE02` · `PRE03` · `R01` · `S01` · `S02`
+· `CARD01` — خرجت `BLOCKED` بسبب `MASTER_RECORD_MISSING`.
+
+السبب: **لا صفوف لها في «لوحة الإنتاج اليومية»**. التبويب يحوي
+`FOUNDATION-001` وصفوف `SC-U02-AB-*` فقط.
+
+أي أنه حتى بعد رفع حظر FOUNDATION-001، **الكاروسيل وحده سيمر**.
+والـStories والـReel والبطاقة ستبقى محظورة حتى تُنشأ لها صفوف في:
+لوحة الإنتاج اليومية + سجل الاعتماد + حزم النشر.
+
+هذا سلوك صحيح بحسب §16 (`NO APPROVAL = NO PUBLISH` يسري على كل عنصر
+على حدة)، لكنه يعني أن تقويم الأسبوع لن يُنفَّذ كاملًا تلقائيًا.
+
+## تحقق DRY_RUN مرة أخرى
+
+`modifiedTime` لـMaster Control = `2026-11-22T16:20:01Z` — وهو وقت
+كتابتي للتقويم. التشغيلان 2104 و2108 كانا 16:50 و16:51،
+**ولم يكتبا شيئًا**.
+
+`LEAD_MINUTES` أُعيد إلى 30 وتحقَّقتُ منه.
